@@ -19,6 +19,29 @@ existsElement(X,[_|T]):-
 	existsElement(X,T).
 
 %------------------------------
+% Eliminar un elemento
+%------------------------------
+deleteElement(_,[],[]).
+
+deleteElement(X,[X|T],N):-
+	deleteElement(X,T,N).
+
+deleteElement(X,[H|T],[H|N]):-
+	deleteElement(X,T,N),
+	X\=H.
+
+%------------------------------
+% Cambiar un elemento
+%------------------------------
+changeElement(_,_,[],[]).
+
+changeElement(X,Y,[X|T],[Y|N]):-
+	changeElement(X,Y,T,N).
+
+changeElement(X,Y,[H|T],[H|N]):-
+	changeElement(X,Y,T,N).
+
+%------------------------------
 % Agregar nueva propiedad a una clase:
 %------------------------------
 addClassProperty(Class, Name, Value):-
@@ -48,7 +71,7 @@ appendProperty(ActualProperties, Name, Value, NewProperties):-
 % Agregar nueva propiedad a un objeto:
 %------------------------------
 addObjectProperty(Object, NewProperty, Value) :-
-    open_kb('kb.txt', ActualKB)
+    open_kb('kb.txt', ActualKB),
 	existsElement([id=>Object, Properties, Relations], Objects),
 	replaceAll(
         [id=>Object, Properties, Relations],
@@ -60,6 +83,49 @@ addObjectProperty(Object, NewProperty, Value) :-
         class(Class, Parent, P, R, NewObjects),
         ActualKB,
         NewKB),
-	appendProperty(Properties, NewProperty, Value, NewProperties).
+	appendProperty(Properties, NewProperty, Value, NewProperties),
     save_kb('nueva_kb.txt', NewKB).
 
+%------------------------------
+% Eliminar valor de una propiedad
+%------------------------------
+deleteClassProperty(Class, Property):-
+    open_kb('kb.txt', ActualKB),
+    changeElement(
+        class(Class, Parent, Properties, R, O),
+        class(Class, Parent, NewProperties, R, O),
+        ActualKB,
+        NewKB),
+	deleteAllWithProperty(Property, Properties, Aux),
+	deleteElement([not(Property), _], Aux, Aux2),
+	deleteElement([Property, _], Aux2, NewProperties),
+    save_kb('nueva_kb.txt', NewKB).
+
+deleteAllWithProperty(_, [], []).
+
+deleteAllWithProperty(X, [[X=>_,_]|T], N):-
+	deleteAllWithProperty(X, T, N).
+
+deleteAllWithProperty(X, [H|T], [H|N]):-
+	deleteAllWithProperty(X, T, N).
+
+%------------------------------
+% Eliminar valor de un objeto
+%------------------------------
+deleteObjectProperty(Object, Property):-
+    open_kb('kb.txt', ActualKB),
+    changeElement(
+        class(Class, Parent, P, R, Objects),
+        class(Class, Parent, P, R, NewObjects),
+        ActualKB,
+        NewKB),
+	isElement([id=>Object, Properties, Relations], Objects),
+	changeElement(
+        [id=>Object, Properties, Relations],
+        [id=>Object, NewProperties, Relations],
+        Objects,
+        NewObjects),
+	deleteAllWithProperty(Property, Properties, Aux),
+	deleteElement([not(Property),_], Aux, Aux2),
+	deleteElement([Property,_], Aux2, NewProperties),
+    save_kb('nueva_kb.txt', NewKB).
