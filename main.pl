@@ -33,8 +33,6 @@ deleteElement(X,[H|T],[H|N]):-
 %------------------------------
 % Cambiar un elemento
 %------------------------------
-changeElement(_,_,[],[]).
-
 changeElement(X,Y,[X|T],[Y|N]):-
 	changeElement(X,Y,T,N).
 
@@ -42,10 +40,27 @@ changeElement(X,Y,[H|T],[H|N]):-
 	changeElement(X,Y,T,N).
 
 %------------------------------
+% Encontrar una propiedad
+%------------------------------
+findProperty([class(Class, _, Properties, _, _)|T], Class, Properties).
+
+findProperty([H|T], Class, Properties):-
+    findProperty(T, Class, Properties).
+
+%------------------------------
+% Encontrar una propiedad
+%------------------------------
+getAllClasses([], []).
+
+getAllClasses([H|T], [H|M]):-
+    getAll(T, M).
+
+%------------------------------
 % Agregar nueva propiedad a una clase:
 %------------------------------
 addClassProperty(Class, Name, Value):-
     open_kb('kb.txt',ActualKB),
+    findProperty(ActualKB, Class, ActualProperties),
     appendProperty(
         ActualProperties,
         Name,
@@ -72,6 +87,11 @@ appendProperty(ActualProperties, Name, Value, NewProperties):-
 %------------------------------
 addObjectProperty(Object, NewProperty, Value) :-
     open_kb('kb.txt', ActualKB),
+    forEachClassAdd(ActualKB).
+
+forEachClassAdd([]).
+forEachClassAdd([class(_, _, _, _, Objects)|T])
+    forEachClassAdd(T),
 	existsElement([id=>Object, Properties, Relations], Objects),
 	replaceAll(
         [id=>Object, Properties, Relations],
@@ -91,11 +111,7 @@ addObjectProperty(Object, NewProperty, Value) :-
 %------------------------------
 deleteClassProperty(Class, Property):-
     open_kb('kb.txt', ActualKB),
-    changeElement(
-        class(Class, Parent, Properties, R, O),
-        class(Class, Parent, NewProperties, R, O),
-        ActualKB,
-        NewKB),
+    findProperty(ActualKB, Class, Properties),
 	deleteAllWithProperty(Property, Properties, Aux),
 	deleteElement([not(Property), _], Aux, Aux2),
 	deleteElement([Property, _], Aux2, NewProperties),
@@ -114,11 +130,10 @@ deleteAllWithProperty(X, [H|T], [H|N]):-
 %------------------------------
 deleteObjectProperty(Object, Property):-
     open_kb('kb.txt', ActualKB),
-    changeElement(
-        class(Class, Parent, P, R, Objects),
-        class(Class, Parent, P, R, NewObjects),
-        ActualKB,
-        NewKB),
+    forEachClassDelete(ActualKB).
+
+forEachClassDelete([|T])
+    forEachClassAdd(T),
 	isElement([id=>Object, Properties, Relations], Objects),
 	changeElement(
         [id=>Object, Properties, Relations],
