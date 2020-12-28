@@ -144,3 +144,8 @@ forEachClassDelete([|T])
 	deleteElement([not(Property),_], Aux, Aux2),
 	deleteElement([Property,_], Aux2, NewProperties),
     save_kb('nueva_kb.txt', NewKB).
+
+%------------------------------
+% Consultar extension de propiedad
+%------------------------------
+
