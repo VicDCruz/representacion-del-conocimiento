@@ -83,6 +83,306 @@ appendProperty(ActualProperties, Name, Value, NewProperties):-
 	append(ActualProperties, [[Name=>Value, 0]], NewProperties).
 
 %------------------------------
+% Saber si existe una clase:
+%------------------------------
+isClass(_, [], null):-!.
+
+isClass(Class, [class(not(Class),_,_,_,_)|_], no):-!.
+
+isClass(Class, [class(Class,_,_,_,_)|_], yes):-!.
+
+isClass(Class, [_|T], Answer):-
+	isClass(Class, T, Answer).
+
+isClassList(Class, KB, Ans):-
+	isClass(Class, KB, Ans),!.
+
+isClassList([], _, yes):-!.
+
+isClassList([H|_], KB, null):-
+	isClass(H, KB, null).
+
+isClassList([H|_], KB, no):-
+	isClass(H, KB, no).
+
+isClassList([H|T], KB, Ans):-
+	isClass(H, KB, yes),
+	isClassList(T, KB, Ans).
+
+%------------------------------
+% Saber si existe un objeto:
+%------------------------------
+isObject(_, [], null):-!.
+
+isObject(Object,[class(_, _, _, _, O)|_], no):-
+	existsElement([id=>not(Object), _, _], O).
+
+isObject(Object, [class(_, _, _, _, O)|_], yes):-
+	existsElement([id=>Object, _, _], O).
+
+isObject(Object, [_|T], Answer):-
+	isObject(Object, T, Answer),!.
+
+isObjectList(Object, KB, Ans):-
+	isObject(Object, KB, Ans),!.
+isObjectList([], _, yes):-!.
+isObjectList([H|_], KB, null):-
+	isObject(H, KB, null).
+isObjectList([H|_], KB, no):-
+	isObject(H, KB, no).
+isObjectList([H|T], KB, Ans):-
+	isObject(H, KB, yes),
+	isObjectList(T, KB, Ans).
+
+%------------------------------
+% Obtener nombres de objetos de una clase:
+%------------------------------
+getNamesObjectsClass(_, [], null):-!.
+
+getNamesObjectsClass(Class, [class(Class,_,_,_,O)|_], Objects):-
+	getNamesObjects(O, Objects),!.
+
+getNamesObjectsClass(Class,[_|T], Objects):-
+	getNamesObjectsClass(Class, T, Objects),!.
+	
+getNamesObjects([] ,[]):-!.
+
+getNamesObjects([[id=>Name,_,_]|T], Objects):-
+	getNamesObjects(T, Rest),
+	append([Name], Rest, Objects).
+
+%------------------------------
+% Obtener hijos de una clase:
+%------------------------------
+getClassChildren(_, [], []).
+
+getClassChildren(Class, [class(Son, Class, _, _, _)|T], Sons):-
+	getClassChildren(Class, T, Brothers),!,
+	append([Son], Brothers, Sons).
+
+getClassChildren(Class, [_|T], Sons):-
+	getClassChildren(Class, T, Sons).
+
+%------------------------------
+% Obtener hijos de una lista de clases
+%------------------------------
+getClassesChildren([], _, []).
+
+getClassesChildren([Son|T], KB, Grandsons):-
+	getClassChildren(Son, KB, Sons),
+	getClassesChildren(T, KB, Cousins),
+	append(Sons, Cousins, Grandsons).
+
+%------------------------------
+% Obtener todos los descendientes de una clase:
+%------------------------------
+getDescendantsClass(Class, KB, Descendants):-
+	isClass(Class, KB, yes),
+	getClassChildren(Class, KB, Sons),
+	getAllDescendantsClass(Sons, KB, Descendants),!.
+
+getDescendantsClass(_, _, null).
+
+getAllDescendantsClass([], _, []).
+
+getAllDescendantsClass(Classes, KB, Descendants):-
+	getClassesChildren(Classes, KB, Sons),
+	getAllDescendantsClass(Sons, KB, RestOfDescendants),!,
+	append(Classes, RestOfDescendants, Descendants).
+
+%------------------------------
+% Obtener nombre de los objetos
+%------------------------------
+getObjectsNames([], []):-!.
+
+getObjectsNames([[id=>Name, _, _]|T], Objects):-
+	getObjectsNames(T, Rest),
+	append([Name], Rest, Objects).
+
+%------------------------------
+% Obtener objetos dentro de una clase:
+%------------------------------
+getObjectsInClass(_, [], null):-!.
+
+getObjectsInClass(Class, [class(Class, _, _, _, O)|_], Objects):-
+	getObjectsNames(O, Objects),!.
+
+getObjectsInClass(Class, [_|T], Objects):-
+	getObjectsInClass(Class, T, Objects),!.
+
+%------------------------------
+% Obtener objetos de los descendientes de una clase:
+%------------------------------
+getDescendantsObjects([], _, []).
+
+getDescendantsObjects([Class|T],KB,AllObjects):-
+	getObjectsInClass(Class, KB, Objects),
+	getDescendantsObjects(T, KB, Rest),
+	append(Objects, Rest, AllObjects),!.
+
+%------------------------------
+% Obtener todos los objetos de una clase:
+%------------------------------
+
+getClassObjects(Class, KB, Objects):-
+	isClass(Class, KB, yes),
+	getNamesObjectsClass(Class, KB, ObjectsInClass),
+	getDescendantsClass(Class, KB, Sons),
+	getDescendantsObjects(Sons, KB, DescendantObjects),
+	append(ObjectsInClass, DescendantObjects, Objects),!.
+
+getClassObjects(_, _, null).
+
+%------------------------------
+% Obtener propiedades adentro de un objeto:
+%------------------------------
+getPropertiesInObject(_, [], []).
+
+getPropertiesInObject(Object, [class(_, _, _, _, O)|_], Properties):-
+	existsElement([id=>Object, Properties, _], O),!.
+
+getPropertiesInObject(Object, [_|T], Properties):-
+	getPropertiesInObject(Object, T, Properties).
+
+%------------------------------
+% Obtener propiedades de un objeto:
+%------------------------------
+getClassOfObject(_, [], null):-!.
+
+getClassOfObject(Object,[class(C, _, _, _, O)|_], C):-
+	existsElement([id=>Object, _, _], O),!.
+
+getClassOfObject(Object, [_|T], Class):-
+	getClassOfObject(Object, T, Class).
+
+%------------------------------
+% Obtener padre de una clase:
+%------------------------------
+getClassParent(_, [], null).
+
+getClassParent(Class, [class(Class, Parent, _, _, _)|_], Parent):-!.
+
+getClassParent(Class, [_|T], Parent):-
+	getClassParent(Class, T, Parent).
+
+%------------------------------
+% Obtener los antecesores de una clase:
+%------------------------------
+getAncestorsList(top, _, []):-!.
+
+getAncestorsList(Class, KB, Ancestors):-
+	getClassParent(Class, KB, Parent),
+	append([Parent], GrandParents, Ancestors),
+	getAncestorsList(Parent, KB, GrandParents).
+
+%------------------------------
+% Obtener propiedades solo en una clase:
+%------------------------------
+getPropertiesInClass(_, [], []).
+
+getPropertiesInClass(Class, [class(Class, _, Properties, _, _)|_], Properties).
+
+getPropertiesInClass(Class, [_|T], Properties):-
+	getPropertiesInClass(Class, T, Properties).
+
+%------------------------------
+% Unir propiedades de los ancestros:
+%------------------------------
+mergeAncestorsProperties([], _, []).
+
+mergeAncestorsProperties([Ancestor|T], KB, TFinal):-
+	mergeAncestorsProperties(T, KB, NewT),
+	getPropertiesInClass(Ancestor, KB, Properties),
+	append(Properties, ['?'], NewProperties),
+	append(NewProperties, NewT, TFinal).
+
+%------------------------------
+% Eliminar propiedades:
+%------------------------------
+deleteSameProperties(_, [], []).
+
+deleteSameProperties(X, [X=>_|T], N):-
+	deleteSameProperties(X, T, N).
+
+deleteSameProperties(X, [H|T], [H|N]):-
+	deleteSameProperties(X, T, N).
+
+%------------------------------
+% Eliminar propiedades negadas:
+%------------------------------
+deleteSameNegatedProperties(_, [], []).
+
+deleteSameNegatedProperties(X, [not(X=>_)|T], N):-
+	deleteSameNegatedProperties(X, T, N).
+
+deleteSameNegatedProperties(X, [H|T], [H|N]):-
+	deleteSameNegatedProperties(X, T, N).
+
+%------------------------------
+% Filtrar por propiedades unicas:
+%------------------------------
+filterUniqueProperties([], []).
+
+filterUniqueProperties([P=>V|T], [P=>V|NewT]):-
+	deleteSameProperties(P, T, L1),
+	deleteElement(not(P=>V), L1, L2),
+	filterUniqueProperties(L2, NewT),!.
+
+filterUniqueProperties([not(P=>V)|T], [not(P=>V)|NewT]):-
+	deleteSameNegatedProperties(P, T, L1),
+	deleteElement(P=>V, L1, L2),
+	filterUniqueProperties(L2, NewT),!.
+
+filterUniqueProperties([not(H)|T], [not(H)|NewT]):-
+	deleteElement(not(H), T, L1),
+	deleteElement(H, L1, L2),
+	filterUniqueProperties(L2, NewT),!.
+
+filterUniqueProperties([H|T],[H|NewT]):-
+	deleteElement(H, T, L1),
+	deleteElement(not(H), L1, L2),
+	filterUniqueProperties(L2, NewT),!.
+
+%------------------------------
+% Obtener propiedades de un objeto:
+%------------------------------
+getObjectProperties(Object, KB, AllProperties):-
+	isObject(Object, KB, yes),
+	getPropertiesInObject(Object, KB, ObjectProperties),
+	getClassOfObject(Object, KB, Class),
+	getAncestorsList(Class, KB, Ancestors),
+	mergeAncestorsProperties([Class|Ancestors], KB, ClassProperties),
+	append(ObjectProperties, ['?'], ObjectProperties2),
+	append(ObjectProperties2, ClassProperties, Temp),
+	filterUniqueProperties(Temp, AllProperties),!.
+
+getObjectProperties(_, _, null).
+
+%------------------------------
+% Encontrar valor de una propiedad:
+%------------------------------
+searchPropertyValue(_, [], null).
+
+searchPropertyValue(Attribute, [Attribute=>Value|_], Value).
+
+searchPropertyValue(Attribute, [not(Attribute)|_], no).
+
+searchPropertyValue(Attribute, [Attribute|_], yes).
+
+searchPropertyValue(Attribute, [_|T], Value):-
+	searchPropertyValue(Attribute, T, Value).
+
+%------------------------------
+% Obtener valor de una propiedad de un objeto:
+%------------------------------
+getObjectPropertyValue(Object, Property, KB, Value):-
+	getObjectPropertyValue(Object, KB, yes),
+	getObjectProperties(Object, KB, Properties),
+	searchPropertyValue(Property, Properties, Value).
+
+getObjectPropertyValue(_, _, _, null).
+
+%------------------------------
 % Agregar nueva propiedad a un objeto:
 %------------------------------
 addObjectProperty(Object, NewProperty, Value) :-
@@ -134,7 +434,7 @@ deleteObjectProperty(Object, Property):-
 
 forEachClassDelete([|T])
     forEachClassAdd(T),
-	isElement([id=>Object, Properties, Relations], Objects),
+	existsElement([id=>Object, Properties, Relations], Objects),
 	changeElement(
         [id=>Object, Properties, Relations],
         [id=>Object, NewProperties, Relations],
@@ -148,4 +448,25 @@ forEachClassDelete([|T])
 %------------------------------
 % Consultar extension de propiedad
 %------------------------------
+getExtensionProperty(Property, Result):-
+    open_kb('kb.txt', ActualKB),
+	getClassObjects(top, ActualKB, AllObjects),
+	filterObjectsByProperty(ActualKB, Property, AllObjects, Objects),
+	deleteNullProperty(Objects, Result).
 
+filterObjectsByProperty(_, _, [], []):-!.
+
+filterObjectsByProperty(ActualKB, Property, [H|T], [H:Value|NewT]):-
+	getObjectPropertyValue(H,Property, ActualKB, Value),!,
+	filterObjectsByProperty(ActualKB, Property, T, NewT).
+
+deleteNullProperty([], []).
+
+deleteNullProperty([_:null|T], NewT):-
+	deleteNullProperty(T, NewT),!.
+
+deleteNullProperty([_:[null]|T], NewT):-
+	deleteNullProperty(T, NewT),!.
+
+deleteNullProperty([X:Y|T], [X:Y|NewT]):-
+	deleteNullProperty(T, NewT),!.
