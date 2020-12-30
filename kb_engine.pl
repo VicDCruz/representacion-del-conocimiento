@@ -102,6 +102,13 @@ borrar_elementos_misma_propiedad(X,[[X=>_,_]|T],N):-
 borra_elementos_misma_propiedad(X,[H|T],[H|N]):-
 	borrar_elementos_misma_propiedad(X,T,N).
 
+borrar_elementos_misma_propiedad_negada(_,[],[]).
+borrar_elementos_misma_propiedad_negada(X,[[not(X=>_),_]|T],N):-
+	borrar_elementos_misma_propiedad_negada(X,T,N).
+borrar_elementos_misma_propiedad_negada(X,[H|T],[H|N]):-
+	borrar_elementos_misma_propiedad_negada(X,T,N).
+
+
 eliminar_elemento(_,[],[]).
 eliminar_elemento(X,[X|T],N):-
 	eliminar_elemento(X,T,N).
@@ -109,29 +116,92 @@ eliminar_elemento(X,[H|T],[H|N]):-
 	eliminar_elemento(X,T,N),
 	X\=H.
 
-eliminar_propiedad_clase(Class,Propiedad,OriginalKB,Nueva_KB) :-
-	cambiar_elemento(class(Class,Padre,Props,Rel,Objetos),class(Class,Padre,Nueva_props,Rel,Objetos),OriginalKB,Nueva_KB),
-	borrar_elementos_misma_propiedad(Propiedad,Props,Aux),
-	eliminar_elemento([not(Propiedad),_],Aux,Aux2),
-	eliminar_elemento([Propiedad,_],Aux2,Nueva_props).
-
 eliminar_propiedad_objeto(Objeto,Propiedad,OriginalKB,Nueva_KB) :-
-	cambiar_elemento(class(Class,Padre,Props,Rel,Objetos),class(Class,Padre,Props,Rel,NObjetos),OriginalKB,Nueva_KB),
+	cambiar_elemento(clase(Clase,Padre,Props,Rel,Objetos),clase(Clase,Padre,Props,Rel,NObjetos),OriginalKB,Nueva_KB),
 	verifica_elemento([id=>Objeto,Propiedades,Relaciones],Objetos),
 	cambiar_elemento([id=>Objeto,Propiedades,Relaciones],[id=>Objeto,Nueva_pro,Relaciones],Objetos,NObjetos),
-	borrar_elementos_misma_propiedad(Propiedad,Propiedades,Aux),
-	eliminar_elemento([not(Propiedad),_],Aux,Aux2),
-	eliminar_elemento([Propiedad,_],Aux2,Nueva_pro).
+	borrar_elementos_misma_propiedad(Propiedad,Propiedades,Tmp),
+	eliminar_elemento([not(Propiedad),_],Tmp,Tmp2),
+	eliminar_elemento([Propiedad,_],Tmp2,Nueva_pro).
 
-agregar_propiedad_clase(Class,Nueva_prop,Valor,OriginalKB,Nueva_KB) :-
-	cambiar_elemento(class(Class,Padre,Props,Rel,Objetos),class(Class,Padre,Nueva_props,Rel,Objetos),OriginalKB,Nueva_KB),
+eliminar_propiedad_clase(Clase,Propiedad,OriginalKB,Nueva_KB) :-
+	cambiar_elemento(clase(Clase,Padre,Props,Rel,Objetos),clase(Clase,Padre,Nueva_props,Rel,Objetos),OriginalKB,Nueva_KB),
+	borrar_elementos_misma_propiedad(Propiedad,Props,Tmp),
+	eliminar_elemento([not(Propiedad),_],Tmp,Tmp2),
+	eliminar_elemento([Propiedad,_],Tmp2,Nueva_props).
+agregar_propiedad_clase(Clase,Nueva_prop,Valor,OriginalKB,Nueva_KB) :-
+	cambiar_elemento(clase(Clase,Padre,Props,Rel,Objetos),clase(Clase,Padre,Nueva_props,Rel,Objetos),OriginalKB,Nueva_KB),
 	append_propiedad(Props,Nueva_prop,Valor,Nueva_props).
-
 agregar_propiedad_objeto(Objeto,Nueva_prop,Valor,OriginalKB,Nueva_KB) :-
-	cambiar_elemento(class(Class,Padre,Props,Rel,Objetos),class(Class,Padre,Props,Rel,NObjetos),OriginalKB,Nueva_KB),
+	cambiar_elemento(clase(Clase,Padre,Props,Rel,Objetos),clase(Clase,Padre,Props,Rel,NObjetos),OriginalKB,Nueva_KB),
 	verifica_elemento([id=>Objeto,Propiedades,Relaciones],Objetos),
 	cambiar_elemento([id=>Objeto,Propiedades,Relaciones],[id=>Objeto,Nueva_pro,Relaciones],Objetos,NObjetos),
 	append_propiedad(Propiedades,Nueva_prop,Valor,Nueva_pro).
+
+verifica_objeto(_,[],unknown):-!.
+verifica_objeto(Objeto,[clase(_,_,_,_,O)|_],no):-
+	verifica_elemento([id=>not(Objeto),_,_],O).
+verifica_objeto(Objeto,[clase(_,_,_,_,O)|_],yes):-
+	verifica_elemento([id=>Objeto,_,_],O).
+verifica_objeto(Objeto,[_|T],Respuesta):-
+	verifica_objeto(Objeto,T,Respuesta),!.
+
+verifica_objeto_lista(Objeto,KB,Res):-
+	verifica_objeto(Objeto,KB,Res),!.
+verifica_objeto_lista([],_,yes):-!.
+verifica_objeto_lista([H|_],KB,unknown):-
+	verifica_objeto(H,KB,unknown).
+verifica_objeto_lista([H|_],KB,no):-
+	verifica_objeto(H,KB,no).
+verifica_objeto_lista([H|T],KB,Res):-
+	verifica_objeto(H,KB,yes),
+	verifica_objeto_lista(T,KB,Res).
+
+verifica_clase(_,[],unknown):-!.
+verifica_clase(Clase,[class(not(Class),_,_,_,_)|_],no):-!.
+verifica_clase(Clase,[class(Clase,_,_,_,_)|_],yes):-!.
+verifica_clase(Clase,[_|T],Respuesta):-
+	verifica_clase(Clase,T,Respuesta).
+
+verifica_clase_lista(Clase,KB,Res):-
+	verifica_clase(Clase,KB,Res),!.
+verifica_clase_lista([],_,yes):-!.
+verifica_clase_lista([H|_],KB,unknown):-
+	verifica_clase(H,KB,unknown).
+verifica_clase_lista([H|_],KB,no):-
+	verifica_clase(H,KB,no).
+verifica_clase_lista([H|T],KB,Res):-
+	verifica_clase(H,KB,yes),
+	verifica_clase_lista(T,KB,Res).
+
+
+elimina_relacion_objeto(Objeto,not(Relacion),OriginalKB,Nueva_KB) :-
+	cambiar_elemento(clase(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,Rels,Nuevos_objetos),OriginalKB,Nueva_KB),
+	verifica_elemento([id=>Objeto,Propiedades,Relaciones],Objetos),
+	cambiar_elemento([id=>Objeto,Propiedades,Relaciones],[id=>Object,Propiedades,NRelaciones],Objetos,Nuevos_objetos),
+	borrar_elementos_misma_propiedad_negada(Relacion,Relaciones,NRelaciones).
+elimina_relacion_objeto(Objeto,Relacion,OriginalKB,Nueva_KB) :-
+	cambiar_elemento(clase(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,Rels,Nuevos_objetos),OriginalKB,Nueva_KB),
+	verifica_elemento([id=>Objeto,Propiedades,Relaciones],Objetos),
+	cambiar_elemento([id=>Objeto,Propiedades,Relaciones],[id=>Objeto,Propiedades,NRelaciones],Objetos,Nuevos_objetos),
+	borrar_elementos_misma_propiedad(Relacion,Relaciones,NRelaciones).
+
+agrega_relacion_objeto(Objeto,Nueva_rel,Otro_objeto,OriginalKB,Nueva_KB) :-
+	cambiar_elemento(clase(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,Rels,Nuevos_objetos),OriginalKB,Nueva_KB),
+	verifica_elemento([id=>Objeto,Propiedades,Relaciones],Objetos),
+	cambiar_elemento([id=>Objeto,Propiedades,Relaciones],[id=>Objeto,Propiedades,NRelaciones],Objetos,Nuevos_objetos),
+	append_relacion(Relaciones,Nueva_rel,Otro_objeto,NRelaciones).
+
+elimina_relacion_clase(Clase,not(Relacion),OriginalKB,Nueva_KB) :-
+	cambiar_elemento(class(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
+	borrar_elementos_misma_propiedad_negada(Relacion,Rels,NRelaciones).
+elimina_relacion_clase(Clase,Relacion,OriginalKB,Nueva_KB) :-
+	cambiar_elemento(class(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
+	borrar_elementos_misma_propiedad(Relacion,Rels,NRelaciones).
+
+agrega_relacion_clase(Clase,Nueva_relacion,Otra_clase,OriginalKB,Nueva_KB) :-
+	cambiar_elemento(class(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
+	append_relacion(Rels,Nueva_relacion,Otra_clase,NRelaciones).
 
 
 %------------------------------
@@ -201,11 +271,34 @@ cambiar_valor_propiedad_objeto(Objeto,Propiedad,Nuevo_valor,KB,Nueva_KB):-
 %------------------------------
 % Modificar el valor de una propiedad específica de una clase 
 %------------------------------
-cambiar_valor_propiedad_clase(Class,Propiedad,Nuevo_valor,KB,Nueva_KB):-
+cambiar_valor_propiedad_clase(Clase,Propiedad,Nuevo_valor,KB,Nueva_KB):-
 	open_kb('D:\\Documentos\\MCIC\\Materias\\Inteligencia_Artificial\\Proyectos\\Representacion_del_conocimiento\\Entrega_1\\TaxonomiaNoMonotonica_art.txt',KB),
-	eliminar_propiedad_clase(Class,Propiedad,KB,TemporalKB),
-	agregar_propiedad_clase(Class,Propiedad,Nuevo_valor,TemporalKB,Nueva_KB),
+	eliminar_propiedad_clase(Clase,Propiedad,KB,TemporalKB),
+	agregar_propiedad_clase(Clase,Propiedad,Nuevo_valor,TemporalKB,Nueva_KB),
 	save_kb('D:\\Documentos\\MCIC\\Materias\\Inteligencia_Artificial\\Proyectos\\Representacion_del_conocimiento\\Entrega_1\\nueva_kb.txt',Nueva_KB).
+
+%------------------------------
+% Modificar con quien tiene una relacion específica una clase 
+%------------------------------
+cambiar_valor_relacion_objeto(Objeto,Relacion,Nuevo_objeto_relacionado,KB,Nueva_KB):-
+	open_kb('D:\\Documentos\\MCIC\\Materias\\Inteligencia_Artificial\\Proyectos\\Representacion_del_conocimiento\\Entrega_1\\TaxonomiaNoMonotonica_art.txt',KB),
+	verifica_objeto_lista(Nuevo_objeto_relacionado,KB,yes),
+	elimina_relacion_objeto(Objeto,Relacion,KB,TemporalKB),
+	agrega_relacion_objeto(Objeto,Relacion,Nuevo_objeto_relacionado,TemporalKB,Nueva_KB),
+	save_kb('D:\\Documentos\\MCIC\\Materias\\Inteligencia_Artificial\\Proyectos\\Representacion_del_conocimiento\\Entrega_1\\nueva_kb.txt',Nueva_KB).
+
+
+%------------------------------
+% Modificar con quien tiene una relacion específica una clase 
+%------------------------------
+cambiar_valor_relacion_clase(Clase,Relacion,Nueva_clase_relacionada,KB,Nueva_KB):-
+	open_kb('D:\\Documentos\\MCIC\\Materias\\Inteligencia_Artificial\\Proyectos\\Representacion_del_conocimiento\\Entrega_1\\TaxonomiaNoMonotonica_art.txt',KB),
+	verifica_clase_lista(Nueva_clase_relacionada,KB,yes),
+	elimina_relacion_clase(Clase,Relacion,KB,TemporalKB),
+	agrega_relacion_clase(Clase,Relacion,Nueva_clase_relacionada,TemporalKB,Nueva_KB),
+	save_kb('D:\\Documentos\\MCIC\\Materias\\Inteligencia_Artificial\\Proyectos\\Representacion_del_conocimiento\\Entrega_1\\nueva_kb.txt',Nueva_KB).
+
+
 
 %------------------------------
 % Ejemplo:  
