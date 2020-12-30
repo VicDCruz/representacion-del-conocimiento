@@ -158,8 +158,8 @@ verifica_objeto_lista([H|T],KB,Res):-
 	verifica_objeto_lista(T,KB,Res).
 
 verifica_clase(_,[],unknown):-!.
-verifica_clase(Clase,[class(not(Class),_,_,_,_)|_],no):-!.
-verifica_clase(Clase,[class(Clase,_,_,_,_)|_],yes):-!.
+verifica_clase(Clase,[clase(not(Class),_,_,_,_)|_],no):-!.
+verifica_clase(Clase,[clase(Clase,_,_,_,_)|_],yes):-!.
 verifica_clase(Clase,[_|T],Respuesta):-
 	verifica_clase(Clase,T,Respuesta).
 
@@ -193,14 +193,14 @@ agrega_relacion_objeto(Objeto,Nueva_rel,Otro_objeto,OriginalKB,Nueva_KB) :-
 	append_relacion(Relaciones,Nueva_rel,Otro_objeto,NRelaciones).
 
 elimina_relacion_clase(Clase,not(Relacion),OriginalKB,Nueva_KB) :-
-	cambiar_elemento(class(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
+	cambiar_elemento(clase(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
 	borrar_elementos_misma_propiedad_negada(Relacion,Rels,NRelaciones).
 elimina_relacion_clase(Clase,Relacion,OriginalKB,Nueva_KB) :-
-	cambiar_elemento(class(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
+	cambiar_elemento(clase(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
 	borrar_elementos_misma_propiedad(Relacion,Rels,NRelaciones).
 
 agrega_relacion_clase(Clase,Nueva_relacion,Otra_clase,OriginalKB,Nueva_KB) :-
-	cambiar_elemento(class(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
+	cambiar_elemento(clase(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
 	append_relacion(Rels,Nueva_relacion,Otra_clase,NRelaciones).
 
 
@@ -298,6 +298,82 @@ cambiar_valor_relacion_clase(Clase,Relacion,Nueva_clase_relacionada,KB,Nueva_KB)
 	agrega_relacion_clase(Clase,Relacion,Nueva_clase_relacionada,TemporalKB,Nueva_KB),
 	save_kb('D:\\Documentos\\MCIC\\Materias\\Inteligencia_Artificial\\Proyectos\\Representacion_del_conocimiento\\Entrega_1\\nueva_kb.txt',Nueva_KB).
 
+
+
+
+%------------------------------
+% La extensión de una clase (el conjunto de todos los objetos que pertenecen a la misma, ya
+%sea porque se declaren directamente o porque están en la cerradura de la relación de
+%herencia).
+%------------------------------
+
+hijos_clase(Clase,KB,Respuesta):-
+	verifica_clase(Clase,KB,yes),
+	hijos_clase(Clase,KB,Respuesta),!.
+
+hijos_clase(_,_,unknown).
+
+hijos_clase(_,[],[]).
+
+hijos_clase(Clase,[clase(Hijo,Clase,_,_,_)|T],Hijos):-
+	hijos_clase(Clase,T,Hermanos),!,	
+	append([Hijo],Hermanos,Hijos).
+
+hijos_clase(Clase,[_|T],Hijos):-
+	hijos_clase(Clase,T,Hijos).	
+	
+
+extrae_nombres_objetos([],[]):-!.
+
+extrae_nombres_objetos([[id=>Nombre,_,_]|T],Objetos):-
+	extrae_nombres_objetos(T,Resto),
+	append([Nombre],Resto,Objetos).
+
+hijos_lista_clase([],_,[]).
+
+hijos_lista_clase([Hijo|T],KB,Nietos,):-
+	hijos_clase(Hijo,KB,Hijos),
+	hijos_lista_clase(T,KB,Primos),
+	append(Hijos,Primos,Nietos,).
+
+descendientes_clase(Clase,KB,Descendientes):-
+	verifica_clase(Clase,KB,yes),
+	hijos_clase(Clase,KB,Hijos),
+	todos_descendientes_clase(Hijos,KB,Descendientes),!.
+
+descendientes_clase(_,_,unknown).
+
+todos_descendientes_clase([],_,[]).
+
+todos_descendientes_clase(Clases,KB,Descendientes):-
+	hijos_lista_clase(Clases,KB,Hijos),
+	todos_descendientes_clase(Hijos,KB,Resto_descendientes),!,
+	append(Clases,Resto_descendientes,Descendientes).
+
+objetos_solo_clase(_,[],unknown):-!.
+
+objetos_solo_clase(Clase,[clase(Clase,_,_,_,O)|_],Objetos):-
+	extrae_nombres_objetos(O,Objetos),!.
+
+objetos_solo_clase(Clase,[_|T],Objetos):-
+	objetos_solo_clase(Clase,T,Objetos),!.
+
+objetos_clase(Clase,KB,Objetos):-	
+	verifica_clase(Clase,KB,yes),
+	objetos_solo_clase(Clase,KB,Objetos_clase),
+	descendientes_clase(Clase,KB,Hijos),
+	objetos_descendientes_todos_clase(Hijos,KB,Descendientes_objetos),
+	append(Objetos_clase,Descendientes_objetos,Objetos),!.
+
+objetos_clase(_,_,unknown).
+
+objetos_descendientes_todos_clase([],_,[]).
+
+objetos_descendientes_todos_clase([Clase|T],KB,Todos_objetos):-
+	open_kb('D:\\Documentos\\MCIC\\Materias\\Inteligencia_Artificial\\Proyectos\\Representacion_del_conocimiento\\Entrega_1\\TaxonomiaNoMonotonica_art.txt',KB),
+	objetos_solo_clase(Clase,KB,Objetos),
+	objetos_descendientes_todos_clase(T,KB,Resto),
+	append(Objetos,Resto,Todos_objetos),!.	
 
 
 %------------------------------
