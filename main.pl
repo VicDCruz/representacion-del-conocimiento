@@ -145,33 +145,33 @@ getNamesObjectsClass(Class, [class(Class,_,_,_,O)|_], Objects):-
 getNamesObjectsClass(Class,[_|T], Objects):-
 	getNamesObjectsClass(Class, T, Objects),!.
 	
-getNamesObjects([] ,[]):-!.
+getNamesObjects([], []):-!.
 
-getNamesObjects([[id=>Name,_,_]|T], Objects):-
-	getNamesObjects(T, Rest),
-	append([Name], Rest, Objects).
+getNamesObjects([[id=>Name,_,_]|T], NewA):-
+	getNamesObjects(T, OldA),
+	append([Name], OldA, NewA).
 
 %------------------------------
 % Obtener hijos de una clase:
 %------------------------------
 getClassChildren(_, [], []).
 
-getClassChildren(Class, [class(Son, Class, _, _, _)|T], Sons):-
+getClassChildren(Class, [class(Son, Class, _, _, _)|T], Children):-
 	getClassChildren(Class, T, Brothers),!,
-	append([Son], Brothers, Sons).
+	append([Son], Brothers, Children).
 
-getClassChildren(Class, [_|T], Sons):-
-	getClassChildren(Class, T, Sons).
+getClassChildren(Class, [_|T], Children):-
+	getClassChildren(Class, T, Children).
 
 %------------------------------
 % Obtener hijos de una lista de clases
 %------------------------------
 getClassesChildren([], _, []).
 
-getClassesChildren([Son|T], KB, Grandsons):-
-	getClassChildren(Son, KB, Sons),
-	getClassesChildren(T, KB, Cousins),
-	append(Sons, Cousins, Grandsons).
+getClassesChildren([H|T], KB, Children):-
+	getClassChildren(H, KB, R1),
+	getClassesChildren(T, KB, R2),
+	append(R1, R2, Children).
 
 %------------------------------
 % Obtener todos los descendientes de una clase:
@@ -215,21 +215,21 @@ getObjectsInClass(Class, [_|T], Objects):-
 %------------------------------
 getDescendantsObjects([], _, []).
 
-getDescendantsObjects([Class|T],KB,AllObjects):-
+getDescendantsObjects([Class|T], KB, Res):-
 	getObjectsInClass(Class, KB, Objects),
-	getDescendantsObjects(T, KB, Rest),
-	append(Objects, Rest, AllObjects),!.
+	getDescendantsObjects(T, KB, OldChildren),
+	append(Objects, OldChildren, Res),!.
 
 %------------------------------
 % Obtener todos los objetos de una clase:
 %------------------------------
 
-getClassObjects(Class, KB, Objects):-
+getClassObjects(Class, KB, R):-
 	isClass(Class, KB, yes),
-	getNamesObjectsClass(Class, KB, ObjectsInClass),
 	getDescendantsClass(Class, KB, Sons),
-	getDescendantsObjects(Sons, KB, DescendantObjects),
-	append(ObjectsInClass, DescendantObjects, Objects),!.
+	getDescendantsObjects(Sons, KB, OldChildren),
+	getNamesObjectsClass(Class, KB, ClassName),
+	append(ClassName, OldChildren, R),!.
 
 getClassObjects(_, _, null).
 
@@ -249,7 +249,7 @@ getPropertiesInObject(Object, [_|T], Properties):-
 %------------------------------
 getClassOfObject(_, [], null):-!.
 
-getClassOfObject(Object,[class(C, _, _, _, O)|_], C):-
+getClassOfObject(Object,[class(Class, _, _, _, O)|_], Class):-
 	existsElement([id=>Object, _, _], O),!.
 
 getClassOfObject(Object, [_|T], Class):-
@@ -290,11 +290,11 @@ getPropertiesInClass(Class, [_|T], Properties):-
 %------------------------------
 mergeAncestorsProperties([], _, []).
 
-mergeAncestorsProperties([Ancestor|T], KB, TFinal):-
-	mergeAncestorsProperties(T, KB, NewT),
-	getPropertiesInClass(Ancestor, KB, Properties),
-	append(Properties, ['?'], NewProperties),
-	append(NewProperties, NewT, TFinal).
+mergeAncestorsProperties([H|T], KB, Res):-
+	mergeAncestorsProperties(T, KB, U),
+	getPropertiesInClass(H, KB, Properties),
+	append(Properties, ['UNKNOWN'], NewProperties),
+	append(NewProperties, U, Res).
 
 %------------------------------
 % Eliminar propiedades:
@@ -323,25 +323,25 @@ deleteSameNegatedProperties(X, [H|T], [H|N]):-
 %------------------------------
 filterUniqueProperties([], []).
 
-filterUniqueProperties([P=>V|T], [P=>V|NewT]):-
-	deleteSameProperties(P, T, L1),
-	deleteElement(not(P=>V), L1, L2),
-	filterUniqueProperties(L2, NewT),!.
+filterUniqueProperties([P=>V|T], [P=>V|U]):-
+	deleteSameProperties(P, T, R1),
+	deleteElement(not(P=>V), R1, R2),
+	filterUniqueProperties(R2, U),!.
 
-filterUniqueProperties([not(P=>V)|T], [not(P=>V)|NewT]):-
-	deleteSameNegatedProperties(P, T, L1),
-	deleteElement(P=>V, L1, L2),
-	filterUniqueProperties(L2, NewT),!.
+filterUniqueProperties([not(P=>V)|T], [not(P=>V)|U]):-
+	deleteSameNegatedProperties(P, T, R1),
+	deleteElement(P=>V, R1, R2),
+	filterUniqueProperties(R2, U),!.
 
-filterUniqueProperties([not(H)|T], [not(H)|NewT]):-
-	deleteElement(not(H), T, L1),
-	deleteElement(H, L1, L2),
-	filterUniqueProperties(L2, NewT),!.
+filterUniqueProperties([not(H)|T], [not(H)|U]):-
+	deleteElement(not(H), T, R1),
+	deleteElement(H, R1, R2),
+	filterUniqueProperties(R2, U),!.
 
-filterUniqueProperties([H|T],[H|NewT]):-
-	deleteElement(H, T, L1),
-	deleteElement(not(H), L1, L2),
-	filterUniqueProperties(L2, NewT),!.
+filterUniqueProperties([H|T],[H|U]):-
+	deleteElement(H, T, R1),
+	deleteElement(not(H), R1, R2),
+	filterUniqueProperties(R2, U),!.
 
 %------------------------------
 % Obtener propiedades de un objeto:
@@ -352,7 +352,7 @@ getObjectProperties(Object, KB, AllProperties):-
 	getClassOfObject(Object, KB, Class),
 	getAncestorsList(Class, KB, Ancestors),
 	mergeAncestorsProperties([Class|Ancestors], KB, ClassProperties),
-	append(ObjectProperties, ['?'], ObjectProperties2),
+	append(ObjectProperties, ['UNKNOWN'], ObjectProperties2),
 	append(ObjectProperties2, ClassProperties, Temp),
 	filterUniqueProperties(Temp, AllProperties),!.
 
