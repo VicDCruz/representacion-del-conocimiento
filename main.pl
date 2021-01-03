@@ -760,7 +760,8 @@ relaciones_de_clase(X,KB,[Obj:Val|L],[Obj:Resultado|R]):-
 	append(Val,RH,Resultado),
 	relaciones_de_clase(X,KB,L,R),!.
 
-extension_relacion(Relacion,KB,Extension):-
+extension_relacion(Relacion,Extension):-
+	open_kb('kb.txt',KB),
 	todos_los_objetos(KB,Objetos),
 	objetos_con_misma_relacion(Relacion,Objetos,NuevosObjectos),
 	acomoda_objetos(NuevosObjectos,Resultado),
@@ -1110,26 +1111,32 @@ eliminar_elementos_misma_prop_negada(X,[Y|L],[Y|R]):-
 
 
 
-eliminar_relacion_clase(Clase,not(Relacion),KB,Nueva_KB) :-
+eliminar_relacion_clase(Clase,not(Relacion),Nueva_KB) :-
+	open_kb('kb.txt',KB),
 	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,NuevasRels,Objectos),KB,Nueva_KB),
-	eliminar_elementos_misma_prop_negada(Relacion,Rels,NuevasRels).
+	eliminar_elementos_misma_prop_negada(Relacion,Rels,NuevasRels),
+	save_kb('kb.txt', Nueva_KB).
 
-eliminar_relacion_clase(Clase,Relacion,KB,Nueva_KB) :-
+eliminar_relacion_clase(Clase,Relacion,Nueva_KB) :-
+	open_kb('kb.txt',KB),
 	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,NuevasRels,Objectos),KB,Nueva_KB),
-	eliminar_elementos_misma_prop(Relacion,Rels,NuevasRels).
+	eliminar_elementos_misma_prop(Relacion,Rels,NuevasRels),
+	save_kb('kb.txt', Nueva_KB).
 
 %-------------------------------------
 % 3(c) Eliminar una relación de un objeto:  
 %-------------------------------------
 
-eliminar_relacion_objeto(Objecto,not(Relacion),KB,Nueva_KB) :-
+eliminar_relacion_objeto(Objecto,not(Relacion),Nueva_KB) :-
+	open_kb('kb.txt',KB),
 	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,Rels,NuevosObjectos),KB,Nueva_KB),
 	es_elemento([id=>Objecto,Propiedades,Relaciones],Objectos),
 	cambiar_elemento([id=>Objecto,Propiedades,Relaciones],[id=>Objecto,Propiedades,NuevasRelaciones],Objectos,NuevosObjectos),
 	eliminar_elementos_misma_prop_negada(Relacion,Relaciones,NuevasRelaciones),
 	save_kb('kb.txt',Nueva_KB).
 
-eliminar_relacion_objeto(Objecto,Relacion,KB,Nueva_KB) :-
+eliminar_relacion_objeto(Objecto,Relacion,Nueva_KB) :-
+	open_kb('kb.txt',KB),
 	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,Rels,NuevosObjectos),KB,Nueva_KB),
 	es_elemento([id=>Objecto,Propiedades,Relaciones],Objectos),
 	cambiar_elemento([id=>Objecto,Propiedades,Relaciones],[id=>Objecto,Propiedades,NuevasRelaciones],Objectos,NuevosObjectos),
