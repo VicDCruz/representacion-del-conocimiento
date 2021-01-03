@@ -50,7 +50,7 @@ hijos_clase(_,_,unknown).
 
 hijos_clase(_,[],[]).
 
-hijos_clase(Clase,[clase(Hijo,Clase,_,_,_)|T],Hijos):-
+hijos_clase(Clase,[class(Hijo,Clase,_,_,_)|T],Hijos):-
 	hijos_clase(Clase,T,Hermanos),!,	
 	append([Hijo],Hermanos,Hijos).
 
@@ -87,7 +87,7 @@ todos_descendientes_clase(Clases,KB,Descendientes):-
 
 objetos_solo_clase(_,[],unknown):-!.
 
-objetos_solo_clase(Clase,[clase(Clase,_,_,_,O)|_],Objetos):-
+objetos_solo_clase(Clase,[class(Clase,_,_,_,O)|_],Objetos):-
 	extrae_nombres_objetos(O,Objetos),!.
 
 objetos_solo_clase(Clase,[_|T],Objetos):-
@@ -124,7 +124,7 @@ cambiar_relaciones(Objeto,Nuevo_nombre,[[id=>Nombre,Prop,Rel]|T],[[id=>Nombre,Pr
 	cambiar_relaciones(Objeto,Nuevo_nombre,T,NT).
 
 cambiar_relaciones_con_objeto(_,_,[],[]).
-cambiar_relaciones_con_objeto(Objeto,Nuevo_nombre,[clase(Clase,Padre,Prop,Rel,Objetos)|T],[clase(Clase,Padre,Prop,NRel,NObjetos)|NT]):-
+cambiar_relaciones_con_objeto(Objeto,Nuevo_nombre,[class(Clase,Padre,Prop,Rel,Objetos)|T],[class(Clase,Padre,Prop,NRel,NObjetos)|NT]):-
 	cambiar_relaciones(Objeto,Nuevo_nombre,Objetos,NObjetos),
 	cambiar_relacion(Objeto,Nuevo_nombre,Rel,NRel),
 	cambiar_relaciones_con_objeto(Objeto,Nuevo_nombre,T,NT).
@@ -153,7 +153,7 @@ verifica_elemento(X,[_|Z]):-
     verifica_elemento(X,Z).
 
 cambia_herencia(_,_,[],[]).
-cambia_herencia(Padre,Nuevo_padre,[clase(Clase,Padre,Prop,Rel,Objetos)|T],[clase(Clase,Nuevo_padre,Prop,Rel,Objetos)|N]):-
+cambia_herencia(Padre,Nuevo_padre,[class(Clase,Padre,Prop,Rel,Objetos)|T],[class(Clase,Nuevo_padre,Prop,Rel,Objetos)|N]):-
 	cambia_herencia(Padre,Nuevo_padre,T,N).
 cambia_herencia(Padre,Nuevo_padre,[H|T],[H|N]):-
 	cambia_herencia(Padre,Nuevo_padre,T,N).
@@ -201,9 +201,9 @@ agregar_propiedad_objeto(Objeto,Nueva_prop,Valor,OriginalKB,Nueva_KB) :-
 	append_propiedad(Propiedades,Nueva_prop,Valor,Nueva_pro).
 
 verifica_objeto(_,[],unknown):-!.
-verifica_objeto(Objeto,[clase(_,_,_,_,O)|_],no):-
+verifica_objeto(Objeto,[class(_,_,_,_,O)|_],no):-
 	verifica_elemento([id=>not(Objeto),_,_],O).
-verifica_objeto(Objeto,[clase(_,_,_,_,O)|_],yes):-
+verifica_objeto(Objeto,[class(_,_,_,_,O)|_],yes):-
 	verifica_elemento([id=>Objeto,_,_],O).
 verifica_objeto(Objeto,[_|T],Respuesta):-
 	verifica_objeto(Objeto,T,Respuesta),!.
@@ -220,8 +220,8 @@ verifica_objeto_lista([H|T],KB,Res):-
 	verifica_objeto_lista(T,KB,Res).
 
 verifica_clase(_,[],unknown):-!.
-verifica_clase(Clase,[clase(not(Class),_,_,_,_)|_],no):-!.
-verifica_clase(Clase,[clase(Clase,_,_,_,_)|_],yes):-!.
+verifica_clase(Clase,[class(not(Class),_,_,_,_)|_],no):-!.
+verifica_clase(Clase,[class(Clase,_,_,_,_)|_],yes):-!.
 verifica_clase(Clase,[_|T],Respuesta):-
 	verifica_clase(Clase,T,Respuesta).
 
