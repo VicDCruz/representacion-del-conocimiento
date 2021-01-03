@@ -1,0 +1,1 @@
+[class(uno,none,[],[[fun,0],[not(teach),0],[not(sport),0]],[[id=>adios,[],[]]]),class(dos,uno,[propiedad],[],[[id=>hola,[],[]],[id=>mundo,[],[]]]),class(tres,dos,[],[],[])]
