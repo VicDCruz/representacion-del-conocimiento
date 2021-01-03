@@ -179,7 +179,7 @@ eliminar_elemento(X,[H|T],[H|N]):-
 	X\=H.
 
 eliminar_propiedad_objeto(Objeto,Propiedad,OriginalKB,Nueva_KB) :-
-	cambiar_elemento(clase(Clase,Padre,Props,Rel,Objetos),clase(Clase,Padre,Props,Rel,NObjetos),OriginalKB,Nueva_KB),
+	cambiar_elemento(class(Clase,Padre,Props,Rel,Objetos),class(Clase,Padre,Props,Rel,NObjetos),OriginalKB,Nueva_KB),
 	verifica_elemento([id=>Objeto,Propiedades,Relaciones],Objetos),
 	cambiar_elemento([id=>Objeto,Propiedades,Relaciones],[id=>Objeto,Nueva_pro,Relaciones],Objetos,NObjetos),
 	borrar_elementos_misma_propiedad(Propiedad,Propiedades,Tmp),
@@ -187,15 +187,15 @@ eliminar_propiedad_objeto(Objeto,Propiedad,OriginalKB,Nueva_KB) :-
 	eliminar_elemento([Propiedad,_],Tmp2,Nueva_pro).
 
 eliminar_propiedad_clase(Clase,Propiedad,OriginalKB,Nueva_KB) :-
-	cambiar_elemento(clase(Clase,Padre,Props,Rel,Objetos),clase(Clase,Padre,Nueva_props,Rel,Objetos),OriginalKB,Nueva_KB),
+	cambiar_elemento(class(Clase,Padre,Props,Rel,Objetos),class(Clase,Padre,Nueva_props,Rel,Objetos),OriginalKB,Nueva_KB),
 	borrar_elementos_misma_propiedad(Propiedad,Props,Tmp),
 	eliminar_elemento([not(Propiedad),_],Tmp,Tmp2),
 	eliminar_elemento([Propiedad,_],Tmp2,Nueva_props).
-agregar_propiedad_clase(Clase,Nueva_prop,Valor,OriginalKB,Nueva_KB) :-
-	cambiar_elemento(clase(Clase,Padre,Props,Rel,Objetos),clase(Clase,Padre,Nueva_props,Rel,Objetos),OriginalKB,Nueva_KB),
+agregar_propiedad_class(Clase,Nueva_prop,Valor,OriginalKB,Nueva_KB) :-
+	cambiar_elemento(class(Clase,Padre,Props,Rel,Objetos),class(Clase,Padre,Nueva_props,Rel,Objetos),OriginalKB,Nueva_KB),
 	append_propiedad(Props,Nueva_prop,Valor,Nueva_props).
 agregar_propiedad_objeto(Objeto,Nueva_prop,Valor,OriginalKB,Nueva_KB) :-
-	cambiar_elemento(clase(Clase,Padre,Props,Rel,Objetos),clase(Clase,Padre,Props,Rel,NObjetos),OriginalKB,Nueva_KB),
+	cambiar_elemento(class(Clase,Padre,Props,Rel,Objetos),class(Clase,Padre,Props,Rel,NObjetos),OriginalKB,Nueva_KB),
 	verifica_elemento([id=>Objeto,Propiedades,Relaciones],Objetos),
 	cambiar_elemento([id=>Objeto,Propiedades,Relaciones],[id=>Objeto,Nueva_pro,Relaciones],Objetos,NObjetos),
 	append_propiedad(Propiedades,Nueva_prop,Valor,Nueva_pro).
@@ -238,31 +238,31 @@ verifica_clase_lista([H|T],KB,Res):-
 
 
 elimina_relacion_objeto(Objeto,not(Relacion),OriginalKB,Nueva_KB) :-
-	cambiar_elemento(clase(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,Rels,Nuevos_objetos),OriginalKB,Nueva_KB),
+	cambiar_elemento(class(Clase,Padre,Props,Rels,Objetos),class(Clase,Padre,Props,Rels,Nuevos_objetos),OriginalKB,Nueva_KB),
 	verifica_elemento([id=>Objeto,Propiedades,Relaciones],Objetos),
 	cambiar_elemento([id=>Objeto,Propiedades,Relaciones],[id=>Object,Propiedades,NRelaciones],Objetos,Nuevos_objetos),
 	borrar_elementos_misma_propiedad_negada(Relacion,Relaciones,NRelaciones).
 elimina_relacion_objeto(Objeto,Relacion,OriginalKB,Nueva_KB) :-
-	cambiar_elemento(clase(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,Rels,Nuevos_objetos),OriginalKB,Nueva_KB),
+	cambiar_elemento(class(Clase,Padre,Props,Rels,Objetos),class(Clase,Padre,Props,Rels,Nuevos_objetos),OriginalKB,Nueva_KB),
 	verifica_elemento([id=>Objeto,Propiedades,Relaciones],Objetos),
 	cambiar_elemento([id=>Objeto,Propiedades,Relaciones],[id=>Objeto,Propiedades,NRelaciones],Objetos,Nuevos_objetos),
 	borrar_elementos_misma_propiedad(Relacion,Relaciones,NRelaciones).
 
 agrega_relacion_objeto(Objeto,Nueva_rel,Otro_objeto,OriginalKB,Nueva_KB) :-
-	cambiar_elemento(clase(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,Rels,Nuevos_objetos),OriginalKB,Nueva_KB),
+	cambiar_elemento(class(Clase,Padre,Props,Rels,Objetos),class(Clase,Padre,Props,Rels,Nuevos_objetos),OriginalKB,Nueva_KB),
 	verifica_elemento([id=>Objeto,Propiedades,Relaciones],Objetos),
 	cambiar_elemento([id=>Objeto,Propiedades,Relaciones],[id=>Objeto,Propiedades,NRelaciones],Objetos,Nuevos_objetos),
 	append_relacion(Relaciones,Nueva_rel,Otro_objeto,NRelaciones).
 
 elimina_relacion_clase(Clase,not(Relacion),OriginalKB,Nueva_KB) :-
-	cambiar_elemento(clase(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
+	cambiar_elemento(class(Clase,Padre,Props,Rels,Objetos),class(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
 	borrar_elementos_misma_propiedad_negada(Relacion,Rels,NRelaciones).
 elimina_relacion_clase(Clase,Relacion,OriginalKB,Nueva_KB) :-
-	cambiar_elemento(clase(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
+	cambiar_elemento(class(Clase,Padre,Props,Rels,Objetos),class(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
 	borrar_elementos_misma_propiedad(Relacion,Rels,NRelaciones).
 
 agrega_relacion_clase(Clase,Nueva_relacion,Otra_clase,OriginalKB,Nueva_KB) :-
-	cambiar_elemento(clase(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
+	cambiar_elemento(class(Clase,Padre,Props,Rels,Objetos),class(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
 	append_relacion(Rels,Nueva_relacion,Otra_clase,NRelaciones).
 
 %------------------------------
@@ -651,9 +651,9 @@ cambiar_elemento(X,Y,[X|T],[Y|N]):-
 cambiar_elemento(X,Y,[H|T],[H|N]):-
 	cambiar_elemento(X,Y,T,N).
 
-
+%=================================================================================================
 %==== PROYECTO ====
-
+%=================================================================================================
 %------------------------------
 % 1(a) La extensión de una clase (el conjunto de todos los objetos que pertenecen a la misma, ya
 %sea porque se declaren directamente o porque están en la cerradura de la relación de
@@ -661,8 +661,8 @@ cambiar_elemento(X,Y,[H|T],[H|N]):-
 %------------------------------
 objetos_descendientes_todos_clase([],_,[]).
 
-objetos_descendientes_todos_clase([Clase|T],KB,Todos_objetos):-
-	open_kb('kb.txt',KB),
+objetos_descendientes_todos_clase([Clase|T],Todos_objetos):-
+	open_kb('C:\\Users\\uriel\\Documents\\GitHub\\representacion-del-conocimiento\\kb.txt',KB),
 	objetos_solo_clase(Clase,KB,Objetos),
 	objetos_descendientes_todos_clase(T,KB,Resto),
 	append(Objetos,Resto,Todos_objetos),!.	
@@ -922,32 +922,32 @@ forEachClassAdd([class(_, _, _, _, Objects)|T])
 %------------------------------
 % 2(c) Agregar nueva relacion de clase:  
 %------------------------------
-agregar_relacion_clase(Clase1,Clase2,Nueva_rel,KB,Nueva_KB):-
+agregar_relacion_clase(Clase1,Clase2,Nueva_rel,Nueva_KB):-
 	open_kb('kb.txt',KB),
-	cambiar_elemento(clase(Clase1,Padre,Prop,Rel,Objetos),clase(Clase1,Padre,Prop,NRel,Objetos),KB,Nueva_KB),
+	cambiar_elemento(class(Clase1,Padre,Prop,Rel,Objetos),class(Clase1,Padre,Prop,NRel,Objetos),KB,Nueva_KB),
 	append_relacion(Rel,Nueva_rel,Clase2,NRel),
     save_kb('kb.txt',Nueva_KB).
 
-agregar_preferencia_relacion_clase(Clase,Nueva_pref,Peso,KB,Nueva_KB):-
+agregar_preferencia_relacion_clase(Clase,Nueva_pref,Peso,Nueva_KB):-
 	open_kb('kb.txt',KB),
-	cambiar_elemento(clase(Clase,Padre,Prop,Rel,Objetos),clase(Clase,Padre,Prop,NRel,Objetos),KB,Nueva_KB),
+	cambiar_elemento(class(Clase,Padre,Prop,Rel,Objetos),class(Clase,Padre,Prop,NRel,Objetos),KB,Nueva_KB),
 	append_preferencia(Rel,Nueva_pref,Peso,NRel),
 	save_kb('kb.txt',Nueva_KB).
 
 %------------------------------
 % 2(c) Agregar nueva relacion de objeto:  
 %------------------------------
-agregar_relacion_objeto(Objeto1,Objeto2,Nueva_rel,KB,Nueva_KB) :-
+agregar_relacion_objeto(Objeto1,Objeto2,Nueva_rel,Nueva_KB) :-
 	open_kb('kb.txt',KB),
-	cambiar_elemento(clase(Clase,Padre,Prop,Rel,Objetos),clase(Clase,Padre,Prop,Rel,NObjetos),KB,Nueva_KB),
+	cambiar_elemento(class(Clase,Padre,Prop,Rel,Objetos),class(Clase,Padre,Prop,Rel,NObjetos),KB,Nueva_KB),
 	verifica_elemento([id=>Objeto1,Propiedades,Relaciones],Objetos),
 	cambiar_elemento([id=>Objeto1,Propiedades,Relaciones],[id=>Objeto1,Propiedades,Nuevas_rel],Objetos,NObjetos),
 	append_relacion(Relaciones,Nueva_rel,Objeto2,Nuevas_rel),
 	save_kb('kb.txt',Nueva_KB).
 
-agregar_preferencia_relacion_objeto(Objeto,Nueva_pref,Peso,KB,Nueva_KB) :-
+agregar_preferencia_relacion_objeto(Objeto,Nueva_pref,Peso,Nueva_KB) :-
 	open_kb('kb.txt',KB),
-	cambiar_elemento(clase(Clase,Padre,Prop,Rel,Objetos),clase(Clase,Padre,Prop,Rel,NObjetos),KB,Nueva_KB),
+	cambiar_elemento(class(Clase,Padre,Prop,Rel,Objetos),class(Clase,Padre,Prop,Rel,NObjetos),KB,Nueva_KB),
 	verifica_elemento([id=>Objeto,Propiedades,Relaciones],Objetos),
 	cambiar_elemento([id=>Objeto,Propiedades,Relaciones],[id=>Objeto,Propiedades,Nuevas_rel],Objetos,NObjetos),
 	append_preferencia(Relaciones,Nueva_pref,Peso,Nuevas_rel),
@@ -1146,9 +1146,9 @@ eliminar_relacion_objeto(Objecto,Relacion,Nueva_KB) :-
 %------------------------------
 % 4(a) Modificar el nombre de una clase:  
 %------------------------------
-cambiar_nombre_clase(Clase,Nuevo_nombre,KB,Nueva_KB) :-
+cambiar_nombre_clase(Clase,Nuevo_nombre,Nueva_KB) :-
 	open_kb('kb.txt',KB),
-	cambiar_elemento(clase(Clase,Padre,Prop,Rel,Objetos),clase(Nuevo_nombre,Padre,Prop,Rel,Objetos),KB,Tmp_KB),
+	cambiar_elemento(class(Clase,Padre,Prop,Rel,Objetos),class(Nuevo_nombre,Padre,Prop,Rel,Objetos),KB,Tmp_KB),
 	cambia_herencia(Clase,Nuevo_nombre,Tmp_KB,Tmp_KB2),
 	cambiar_relaciones_con_objeto(Clase,Nuevo_nombre,Tmp_KB,Nueva_KB),
 	save_kb('kb.txt',Nueva_KB).
@@ -1156,9 +1156,9 @@ cambiar_nombre_clase(Clase,Nuevo_nombre,KB,Nueva_KB) :-
 %------------------------------
 % 4(a) Modificar el nombre de un objeto:  
 %------------------------------
-cambiar_nombre_objeto(Objeto,Nuevo_nombre,KB,Nueva_KB) :-
+cambiar_nombre_objeto(Objeto,Nuevo_nombre,Nueva_KB) :-
 	open_kb('kb.txt',KB),
-	cambiar_elemento(clase(Clase,Padre,Prop,Rel,Objetos),clase(Clase,Padre,Prop,Rel,NObjetos),KB,Tmp_KB),
+	cambiar_elemento(class(Clase,Padre,Prop,Rel,Objetos),class(Clase,Padre,Prop,Rel,NObjetos),KB,Tmp_KB),
 	verifica_elemento([id=>Objeto|Propiedades],Objetos),
 	cambiar_elemento([id=>Objeto|Propiedades],[id=>Nuevo_nombre|Propiedades],Objetos,NObjetos),
 	cambiar_relaciones_con_objeto(Objeto,Nuevo_nombre,Tmp_KB,Nueva_KB),
@@ -1167,7 +1167,7 @@ cambiar_nombre_objeto(Objeto,Nuevo_nombre,KB,Nueva_KB) :-
 %------------------------------				
 % 4(b) Modificar el valor de una propiedad específica de un objeto 
 %------------------------------
-cambiar_valor_propiedad_objeto(Objeto,Propiedad,Nuevo_valor,KB,Nueva_KB):-
+cambiar_valor_propiedad_objeto(Objeto,Propiedad,Nuevo_valor,Nueva_KB):-
 	open_kb('kb.txt',KB),
 	eliminar_propiedad_objeto(Objeto,Propiedad,KB,TemporalKB),
 	agregar_propiedad_objeto(Objeto,Propiedad,Nuevo_valor,TemporalKB,Nueva_KB),
@@ -1176,7 +1176,7 @@ cambiar_valor_propiedad_objeto(Objeto,Propiedad,Nuevo_valor,KB,Nueva_KB):-
 %------------------------------
 % 4(b) Modificar el valor de una propiedad específica de una clase 
 %------------------------------
-cambiar_valor_propiedad_clase(Clase,Propiedad,Nuevo_valor,KB,Nueva_KB):-
+cambiar_valor_propiedad_clase(Clase,Propiedad,Nuevo_valor,Nueva_KB):-
 	open_kb('kb.txt',KB),
 	eliminar_propiedad_clase(Clase,Propiedad,KB,TemporalKB),
 	agregar_propiedad_clase(Clase,Propiedad,Nuevo_valor,TemporalKB,Nueva_KB),
@@ -1185,7 +1185,7 @@ cambiar_valor_propiedad_clase(Clase,Propiedad,Nuevo_valor,KB,Nueva_KB):-
 %------------------------------
 % 4(c) Modificar con quien tiene una relacion específica una clase 
 %------------------------------
-cambiar_valor_relacion_objeto(Objeto,Relacion,Nuevo_objeto_relacionado,KB,Nueva_KB):-
+cambiar_valor_relacion_objeto(Objeto,Relacion,Nuevo_objeto_relacionado,Nueva_KB):-
 	open_kb('kb.txt',KB),
 	verifica_objeto_lista(Nuevo_objeto_relacionado,KB,yes),
 	elimina_relacion_objeto(Objeto,Relacion,KB,TemporalKB),
@@ -1196,7 +1196,7 @@ cambiar_valor_relacion_objeto(Objeto,Relacion,Nuevo_objeto_relacionado,KB,Nueva_
 %------------------------------
 % 4(c) Modificar con quien tiene una relacion específica una clase 
 %------------------------------
-cambiar_valor_relacion_clase(Clase,Relacion,Nueva_clase_relacionada,KB,Nueva_KB):-
+cambiar_valor_relacion_clase(Clase,Relacion,Nueva_clase_relacionada,Nueva_KB):-
 	open_kb('kb.txt',KB),
 	verifica_clase_lista(Nueva_clase_relacionada,KB,yes),
 	elimina_relacion_clase(Clase,Relacion,KB,TemporalKB),
