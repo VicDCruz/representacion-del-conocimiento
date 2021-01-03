@@ -1106,3 +1106,363 @@ deleteNullProperty([_:[null]|T], NewT):-
 
 deleteNullProperty([X:Y|T], [X:Y|NewT]):-
 	deleteNullProperty(T, NewT),!.
+
+%==== DANIEL ====
+%------------------------------
+% Agregar nueva clase:
+%------------------------------
+% Definir la base antes: open_kb('kb.txt',KB)
+
+agregar_clase(Nueva_clase,Padre,Nueva_KB) :-
+	open_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',KB),
+	append(KB,[class(Nueva_clase,Padre,[],[],[])],Nueva_KB),
+    save_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',Nueva_KB).
+
+%------------------------------
+% Agregar nueva objeto:
+%------------------------------
+
+agregar_objeto(Nuevo_objeto,Clase, Nueva_KB) :-
+	open_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',KB),
+	cambiar_elemento(class(Clase,Padre,Prop,Rel,Objectos),class(Clase,Padre,Prop,Rel,Nuevos_objectos),KB,Nueva_KB),
+	append(Objectos,[[id=>Nuevo_objeto,[],[]]],Nuevos_objectos),
+    save_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',Nueva_KB).
+
+%--------------------------------------------------
+% 3a Elimina Clases u objetos
+%--------------------------------------------------
+
+eliminar_elemento(_,[],[]).
+
+eliminar_elemento(X,[X|T],N):-
+	eliminar_elemento(X,T,N).
+
+eliminar_elemento(X,[H|T],[H|N]):-
+	eliminar_elemento(X,T,N),
+	X\=H.
+
+%------------------------------
+% Elimina una clase
+%------------------------------
+
+eliminar_clase(Clase, KBFinal) :-
+	open_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',KB),
+    eliminar_elemento(class(Clase,Padre,_,_,_),KB,KBAux),
+	cambiar_padre(Clase,Padre,KBAux,KBAux2),
+	delete_relations_with_object(Clase,KBAux2,KBFinal),%411 Esto es del repo
+	save_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',KBFinal).
+
+cambiar_padre(_,_,[],[]).
+
+cambiar_padre(PadreAntiguo,PadreNuevo,[class(Clase,PadreAntiguo,Prop,Rel,Objetos)|T],[class(Clase,PadreNuevo,Prop,Rel,Objetos)|N]):-
+	cambiar_padre(PadreAntiguo,PadreNuevo,T,N).
+
+cambiar_padre(PadreAntiguo,PadreNuevo,[H|T],[H|N]):-
+	cambiar_padre(PadreAntiguo,PadreNuevo,T,N).
+
+%-----------------------------------------------------
+delete_relations_with_object(_,[],[]).%367
+
+delete_relations_with_object(Object,[class(C,M,P,R,O)|T],[class(C,M,P,NewR,NewO)|NewT]):-
+	cancel_relation(Object,R,NewR),
+	del_relations(Object,O,NewO),
+	delete_relations_with_object(Object,T,NewT).
+
+cancel_relation(_,[],[]).%380
+
+cancel_relation(Object,[[_=>Object,_]|T],NewT):-
+	cancel_relation(Object,T,NewT).
+
+cancel_relation(Object,[[not(_=>Object),_]|T],NewT):-
+	cancel_relation(Object,T,NewT).
+
+cancel_relation(Object,[[V=>Lst,W]|T],NewT):-
+        is_list(Lst),
+        eliminar_elemento(Object,Lst,NewLst),%390 original es deleteElement()
+        cancel_relation(Object,T,Tmp),
+        length(NewLst,Size),
+        ( Size==1
+         -> [Head|_] = NewLst, NewT = [[V=>Head,W]|Tmp]
+         ;  ( Size>1
+             ->  NewT = [[V=>NewLst,W]|Tmp]
+             ; NewT = Tmp
+            )
+        ).
+
+del_relations(_,[],[]).%374
+
+del_relations(Object,[[id=>N,P,R]|T],[[id=>N,P,NewR]|NewT]):-
+	cancel_relation(Object,R,NewR),
+	del_relations(Object,T,NewT).
+
+%-----------------------------------------------------
+
+
+
+%------------------------------
+% Elimina un objeto:
+%------------------------------
+
+elemento_en_arreglo(X,[X|_]).
+elemento_en_arreglo(X,[_|T]):-
+	elemento_en_arreglo(X,T).
+
+
+%% Remueve un objeto
+eliminar_objeto(Objeto, KBFinal) :-
+	open_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',KB),
+	cambiar_elemento(class(Clase,Padre,Prop,Rel,Objetos),class(Clase,Padre,Prop,Rel,ObjetoNuevo),KB,KBAux),
+	elemento_en_arreglo([id=>Objeto|Propiedades],Objetos),
+	eliminar_elemento([id=>Objeto|Propiedades],Objetos,ObjetoNuevo),
+	delete_relations_with_object(Objeto,KBAux,KBFinal),%365 codigo del repo
+	save_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',KBFinal).
+
+
+%------------------------------
+% 1d Todas las clases a las que pertenece un objeto
+%------------------------------
+
+clases_perteneciente_objeto(_,[],desconocida):-!.
+
+clases_perteneciente_objeto(Objeto,[class(Clase,_,_,_,Objetos)|_],Clase):-
+	elemento_en_arreglo([id=>Objeto,_,_],Objetos),!.
+
+clases_perteneciente_objeto(Objeto,[_|T],Clase):-
+	clases_perteneciente_objeto(Objeto,T,Clase).
+
+%% Clases de un objeto
+clase_objeto(Objeto, Return) :-
+	open_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',KB),
+	clases_perteneciente_objeto(Objeto,KB,Return).
+
+%------------------------------
+% 1e Todas las propiedades de un objeto o clase
+%------------------------------
+
+prop_objeto(_,[],desconocida):-!.
+
+prop_objeto(Objeto,[class(_,_,Prop,_,Objetos)|_],Prop):-
+	elemento_en_arreglo([id=>Objeto,_,_],Objetos),!.
+
+prop_objeto(Objeto,[_|T],Prop):-
+	prop_objeto(Objeto,T,Prop).
+
+%% Propiedades de un objeto
+propiedad_objeto(Objeto, Return) :-
+	open_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',KB),
+	prop_objeto(Objeto,KB,Return).
+
+%------------------------------
+
+prop_clase(_,[],desconocida):-!.
+
+prop_clase(Clase,[class(Class,_,Prop,_,_)|_],Prop):-
+	Clase == Class,!.
+
+prop_clase(Clase,[_|T],Prop):-
+	prop_clase(Clase,T,Prop).
+
+%% Propiedades de una clase
+propiedad_clase(Clase, Return) :-
+	open_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',KB),
+	prop_clase(Clase,KB,Return).
+
+%------------------------------
+% 1f Todas las relaciones de un objeto o clase
+%------------------------------
+
+rel_objeto(_,[],desconocida):-!.
+
+rel_objeto(Objeto,[class(_,_,_,Rel,Objetos)|_],Rel):-
+	elemento_en_arreglo([id=>Objeto,_,_],Objetos),!.
+
+rel_objeto(Objeto,[_|T],Rel):-
+	rel_objeto(Objeto,T,Rel).
+
+%% Relacion de un objeto
+relacion_objeto(Objeto, Return) :-
+	open_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',KB),
+	rel_objeto(Objeto,KB,Return).
+
+%------------------------------
+
+rel_clase(_,[],desconocida):-!.
+
+rel_clase(Clase,[class(Class,_,_,Rel,_)|_],Rel):-
+	Clase == Class,!.
+
+rel_clase(Clase,[_|T],Rel):-
+	rel_clase(Clase,T,Rel).
+
+%% Relacion de una clase
+relacion_clase(Clase, Return) :-
+	open_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',KB),
+	rel_clase(Clase,KB,Return).
+
+%=== IVAN ====
+% Si un elemento pertenece a una lista
+es_elemento(X,[X|_]).
+es_elemento(X,[_|Y]):-
+	es_elemento(X,Y).
+
+%Cambiar elementos de la KB
+
+cambiar_elemento(_,_,[],[]).
+
+cambiar_elemento(X,Y,[X|T],[Y|N]):-
+	cambiar_elemento(X,Y,T,N).
+
+cambiar_elemento(X,Y,[H|T],[H|N]):-
+	cambiar_elemento(X,Y,T,N).
+
+%------------------------------
+% Agregar nueva clase:  
+%------------------------------
+% Definir la base antes: open_kb('kb.txt',KB)
+
+agregar_clase(Nueva_clase,Padre,KB,Nueva_KB) :-
+	append(KB,[class(Nueva_clase,Padre,[],[],[])],Nueva_KB),
+    save_kb('nueva_kb.txt',Nueva_KB).
+
+%------------------------------
+% Agregar nuevo objeto:  
+%------------------------------
+
+agregar_objeto(Nuevo_objeto,Clase,KB,Nueva_KB) :-
+	cambiar_elemento(class(Clase,Padre,Prop,Rel,Objectos),class(Clase,Padre,Prop,Rel,Nuevos_objectos),KB,Nueva_KB),
+	append(Objectos,[[id=>Nuevo_objeto,[],[]]],Nuevos_objectos),
+    save_kb('nueva_kb.txt',Nueva_KB).
+
+
+%-------------------------------------
+% Eliminar una relación de una clase:  
+%-------------------------------------
+
+% Eliminar todos los elementos de una lista con una misma propiedad:  
+
+
+eliminar_elementos_misma_prop(_,[],[]).
+
+eliminar_elementos_misma_prop(X,[X=>_|L],R):-
+	eliminar_elementos_misma_prop(X,L,R).
+
+eliminar_elementos_misma_prop(X,[[X=>_,_]|L],R):-
+	eliminar_elementos_misma_prop(X,L,R).
+
+eliminar_elementos_misma_prop(X,[Y|L],[Y|R]):-
+	eliminar_elementos_misma_prop(X,L,R).
+
+
+% Eliminar todos los elementos de una lista con una misma propiedad negada:  
+
+eliminar_elementos_misma_prop_negada(_,[],[]).
+
+eliminar_elementos_misma_prop_negada(X,[not(X=>_)|L],R):-
+	eliminar_elementos_misma_prop_negada(X,L,R).
+
+eliminar_elementos_misma_prop_negada(X,[[not(X=>_),_]|L],R):-
+	eliminar_elementos_misma_prop_negada(X,L,R).
+
+eliminar_elementos_misma_prop_negada(X,[Y|L],[Y|R]):-
+	eliminar_elementos_misma_prop_negada(X,L,R).
+
+
+
+eliminar_relacion_clase(Clase,not(Relacion),KB,Nueva_KB) :-
+	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,NuevasRels,Objectos),KB,Nueva_KB),
+	eliminar_elementos_misma_prop_negada(Relacion,Rels,NuevasRels).
+
+eliminar_relacion_clase(Clase,Relacion,KB,Nueva_KB) :-
+	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,NuevasRels,Objectos),KB,Nueva_KB),
+	eliminar_elementos_misma_prop(Relacion,Rels,NuevasRels).
+
+%-------------------------------------
+% Eliminar una relación de un objeto:  
+%-------------------------------------
+
+eliminar_relacion_objeto(Objecto,not(Relacion),KB,Nueva_KB) :-
+	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,Rels,NuevosObjectos),KB,Nueva_KB),
+	es_elemento([id=>Objecto,Propiedades,Relaciones],Objectos),
+	cambiar_elemento([id=>Objecto,Propiedades,Relaciones],[id=>Objecto,Propiedades,NuevasRelaciones],Objectos,NuevosObjectos),
+	eliminar_elementos_misma_prop_negada(Relacion,Relaciones,NuevasRelaciones),
+	save_kb('nueva_kb.txt',Nueva_KB).
+
+eliminar_relacion_objeto(Objecto,Relacion,KB,Nueva_KB) :-
+	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,Rels,NuevosObjectos),KB,Nueva_KB),
+	es_elemento([id=>Objecto,Propiedades,Relaciones],Objectos),
+	cambiar_elemento([id=>Objecto,Propiedades,Relaciones],[id=>Objecto,Propiedades,NuevasRelaciones],Objectos,NuevosObjectos),
+	eliminar_elementos_misma_prop(Relacion,Relaciones,NuevasRelaciones),
+	save_kb('nueva_kb.txt',Nueva_KB).
+
+%-------------------------------------
+% Extensión de una relación:  
+%-------------------------------------
+
+todos_los_objetos([],[]).
+todos_los_objetos([class(_,_,_,_,Objs)|L],R):-
+	append(Objs,[],R1),
+	todos_los_objetos(L,R2),!,
+	append(R1,R2,R).
+	%save_kb('objetos.txt',R).
+
+objetos_con_misma_relacion(_,[],[]).
+objetos_con_misma_relacion(X,[[_,_,[]]|L],R):-
+	objetos_con_misma_relacion(X,L,R),!.
+objetos_con_misma_relacion(X,[[_,_,[[]]]|L],R):-
+	objetos_con_misma_relacion(X,L,R),!.
+objetos_con_misma_relacion(X,[[Id,Prop,[[X=>Y,Val]|LR]]|L],[[Id,Prop,[[X=>Y,Val]]]|R]):-
+	objetos_con_misma_relacion(X,[[Id,Prop,LR]|L],R),!.
+objetos_con_misma_relacion(X,[[Id,Prop,[[_=>_,_]|LR]]|L],R):-
+	objetos_con_misma_relacion(X,[[Id,Prop,LR]|L],R),!.
+
+acomoda_objetos([],[]).
+acomoda_objetos([[id=>X,_,[[_=>[Y|Z],_]]]|L],[X:[Y|Z]|R]):-
+	acomoda_objetos(L,R),!.
+acomoda_objetos([[id=>X,_,[[_=>Y,_]]]|L],[X:[Y]|R]):-
+	acomoda_objetos(L,R),!.
+
+clase_de_objeto(_,[],[]).
+clase_de_objeto(X,[class(Name,_,_,_,[[id=>X|_]])|_],Name).
+clase_de_objeto(X,[class(Name,_,_,_,[[id=>X|_]|_])|_],Name).
+clase_de_objeto(X,[class(_,_,_,_,[])|L],R):-
+	clase_de_objeto(X,L,R),!.
+clase_de_objeto(X,[class(N,P,Prop,Rel,[[id=>_|_]|LR])|L],R):-
+	clase_de_objeto(X,[class(N,P,Prop,Rel,LR)|L],R),!.
+
+clases_padre(none,_,_,[]).
+clases_padre(_,_,[],[]).
+clases_padre(A,_,[class(A,none,_,_,_)|_],[]).
+clases_padre(A,KB,[class(A,P,_,_,_)|_],[P|R]):-
+	clases_padre(P,KB,KB,R),!.
+clases_padre(A,KB,[class(_,_,_,_,_)|L],R):-
+	clases_padre(A,KB,L,R),!.
+
+misma_relacion(_,_,[],[]).
+misma_relacion(_,N,[class(N,_,_,[],_)|_],[]).
+misma_relacion(X,N,[class(N,_,_,[[X=>Y,_]|_],_)|L],[Y|R]):-
+	misma_relacion(X,N,L,R).
+misma_relacion(X,N,[class(N,_,_,[[X=>_,_]|LR],_)|L],R):-
+	misma_relacion(X,N,[class(N,_,_,LR,_)|L],R),!.
+misma_relacion(X,N,[class(_,_,_,_,_)|L],R):-
+	misma_relacion(X,N,L,R),!.
+
+relaciones_herencia(_,[],_,[]).
+relaciones_herencia(X,[Clase|LC],KB,R):-
+	misma_relacion(X,Clase,KB,R1),
+	relaciones_herencia(X,LC,KB,R2),!,
+	append(R1,R2,R).
+
+relaciones_de_clase(_,_,[],[]).
+relaciones_de_clase(X,KB,[Obj:Val|L],[Obj:Resultado|R]):-
+	clase_de_objeto(Obj,KB,ClaseActual),
+	clases_padre(ClaseActual,KB,KB,ClasesPadre),
+	append([ClaseActual],ClasesPadre,Clases),
+	relaciones_herencia(X,Clases,KB,RH),
+	append(Val,RH,Resultado),
+	relaciones_de_clase(X,KB,L,R),!.
+
+extension_relacion(Relacion,KB,Extension):-
+	todos_los_objetos(KB,Objetos),
+	objetos_con_misma_relacion(Relacion,Objetos,NuevosObjectos),
+	acomoda_objetos(NuevosObjectos,Resultado),
+	relaciones_de_clase(Relacion,KB,Resultado,Extension).
