@@ -40,6 +40,8 @@ atom_to_term(ATOM, TERM) :-
 :-op(800,xfx,'==>').
 :-op(800,xfx,'=>>').
 
+%=================================================================================================
+
 %Cambiar elementos de la KB
 cambiar_elemento(_,_,[],[]).
 cambiar_elemento(X,Y,[X|T],[Y|N]):-
@@ -203,7 +205,7 @@ agrega_relacion_clase(Clase,Nueva_relacion,Otra_clase,OriginalKB,Nueva_KB) :-
 	cambiar_elemento(clase(Clase,Padre,Props,Rels,Objetos),clase(Clase,Padre,Props,NRelaciones,Objetos),OriginalKB,Nueva_KB),
 	append_relacion(Rels,Nueva_relacion,Otra_clase,NRelaciones).
 
-
+% 2(c)
 %------------------------------
 % Agregar nueva relacion de clase:  
 %------------------------------
@@ -238,6 +240,7 @@ agregar_preferencia_relacion_objeto(Objeto,Nueva_pref,Peso,KB,Nueva_KB) :-
 	append_preferencia(Relaciones,Nueva_pref,Peso,Nuevas_rel),
 	save_kb('D:\\Documentos\\MCIC\\Materias\\Inteligencia_Artificial\\Proyectos\\Representacion_del_conocimiento\\Entrega_1\\nueva_kb.txt',Nueva_KB).
 
+% 4(a)
 %------------------------------
 % Modificar el nombre de una clase:  
 %------------------------------
@@ -259,6 +262,7 @@ cambiar_nombre_objeto(Objeto,Nuevo_nombre,KB,Nueva_KB) :-
 	cambiar_relaciones_con_objeto(Objeto,Nuevo_nombre,Tmp_KB,Nueva_KB),
 	save_kb('D:\\Documentos\\MCIC\\Materias\\Inteligencia_Artificial\\Proyectos\\Representacion_del_conocimiento\\Entrega_1\\nueva_kb.txt',Nueva_KB).
 
+% 4(b)
 %------------------------------				
 % Modificar el valor de una propiedad específica de un objeto 
 %------------------------------
@@ -277,6 +281,7 @@ cambiar_valor_propiedad_clase(Clase,Propiedad,Nuevo_valor,KB,Nueva_KB):-
 	agregar_propiedad_clase(Clase,Propiedad,Nuevo_valor,TemporalKB,Nueva_KB),
 	save_kb('D:\\Documentos\\MCIC\\Materias\\Inteligencia_Artificial\\Proyectos\\Representacion_del_conocimiento\\Entrega_1\\nueva_kb.txt',Nueva_KB).
 
+% 4(c)
 %------------------------------
 % Modificar con quien tiene una relacion específica una clase 
 %------------------------------
@@ -298,9 +303,7 @@ cambiar_valor_relacion_clase(Clase,Relacion,Nueva_clase_relacionada,KB,Nueva_KB)
 	agrega_relacion_clase(Clase,Relacion,Nueva_clase_relacionada,TemporalKB,Nueva_KB),
 	save_kb('D:\\Documentos\\MCIC\\Materias\\Inteligencia_Artificial\\Proyectos\\Representacion_del_conocimiento\\Entrega_1\\nueva_kb.txt',Nueva_KB).
 
-
-
-
+% 1(a)
 %------------------------------
 % La extensión de una clase (el conjunto de todos los objetos que pertenecen a la misma, ya
 %sea porque se declaren directamente o porque están en la cerradura de la relación de
