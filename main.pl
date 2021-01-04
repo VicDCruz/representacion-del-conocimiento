@@ -1344,13 +1344,13 @@ eliminar_elementos_misma_prop_negada(X,[Y|L],[Y|R]):-
 
 
 
-eliminar_relacion_clase(Clase,not(Relacion),Nueva_KB) :-
+eliminar_relacion_clase(Clase,not(Relacion)):-
 	open_kb('kb.txt',KB),
 	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,NuevasRels,Objectos),KB,Nueva_KB),
 	eliminar_elementos_misma_prop_negada(Relacion,Rels,NuevasRels),
 	save_kb('kb.txt', Nueva_KB).
 
-eliminar_relacion_clase(Clase,Relacion,Nueva_KB) :-
+eliminar_relacion_clase(Clase,Relacion):-
 	open_kb('kb.txt',KB),
 	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,NuevasRels,Objectos),KB,Nueva_KB),
 	eliminar_elementos_misma_prop(Relacion,Rels,NuevasRels),
@@ -1360,7 +1360,7 @@ eliminar_relacion_clase(Clase,Relacion,Nueva_KB) :-
 % 3(c) Eliminar una relación de un objeto:  
 %-------------------------------------
 
-eliminar_relacion_objeto(Objecto,not(Relacion),Nueva_KB) :-
+eliminar_relacion_objeto(Objecto,not(Relacion)):-
 	open_kb('kb.txt',KB),
 	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,Rels,NuevosObjectos),KB,Nueva_KB),
 	es_elemento([id=>Objecto,Propiedades,Relaciones],Objectos),
@@ -1368,7 +1368,7 @@ eliminar_relacion_objeto(Objecto,not(Relacion),Nueva_KB) :-
 	eliminar_elementos_misma_prop_negada(Relacion,Relaciones,NuevasRelaciones),
 	save_kb('kb.txt',Nueva_KB).
 
-eliminar_relacion_objeto(Objecto,Relacion,Nueva_KB) :-
+eliminar_relacion_objeto(Objecto,Relacion):-
 	open_kb('kb.txt',KB),
 	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,Rels,NuevosObjectos),KB,Nueva_KB),
 	es_elemento([id=>Objecto,Propiedades,Relaciones],Objectos),
