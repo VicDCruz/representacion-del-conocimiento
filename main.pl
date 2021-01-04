@@ -627,7 +627,7 @@ searchPropertyValue(Attribute, [_|T], Value):-
 % Obtener valor de una propiedad de un objeto:
 %------------------------------
 getObjectPropertyValue(Object, Property, KB, Value):-
-	getObjectPropertyValue(Object, KB, yes),
+	isObject(Object, KB, yes),
 	getObjectProperties(Object, KB, Properties),
 	searchPropertyValue(Property, Properties, Value).
 
@@ -714,6 +714,10 @@ objetos_con_misma_relacion(X,[[Id,Prop,[[X=>Y,Val]|LR]]|L],[[Id,Prop,[[X=>Y,Val]
 objetos_con_misma_relacion(X,[[Id,Prop,[[_=>_,_]|LR]]|L],R):-
 	objetos_con_misma_relacion(X,[[Id,Prop,LR]|L],R),!.
 
+existe_relacion([],desconocida):- !.
+existe_relacion([X|Y],[X|Y]).
+
+acomoda_objetos(desconocida,desconocida):- !.
 acomoda_objetos([],[]).
 acomoda_objetos([[id=>X,_,[[_=>[Y|Z],_]]]|L],[X:[Y|Z]|R]):-
 	acomoda_objetos(L,R),!.
@@ -751,6 +755,7 @@ relaciones_herencia(X,[Clase|LC],KB,R):-
 	relaciones_herencia(X,LC,KB,R2),!,
 	append(R1,R2,R).
 
+relaciones_de_clase(_,_,desconocida,desconocida):- !.
 relaciones_de_clase(_,_,[],[]).
 relaciones_de_clase(X,KB,[Obj:Val|L],[Obj:Resultado|R]):-
 	clase_de_objeto(Obj,KB,ClaseActual),
@@ -764,7 +769,8 @@ extension_relacion(Relacion,Extension):-
 	open_kb('kb.txt',KB),
 	todos_los_objetos(KB,Objetos),
 	objetos_con_misma_relacion(Relacion,Objetos,NuevosObjectos),
-	acomoda_objetos(NuevosObjectos,Resultado),
+	existe_relacion(NuevosObjectos,Existe),
+	acomoda_objetos(Existe,Resultado),
 	relaciones_de_clase(Relacion,KB,Resultado,Extension).
 
 %------------------------------
@@ -883,7 +889,7 @@ agregar_propiedad_clase(Class, Name, Value):-
 		class(Class, Parent, ActualProperties, R, O),
 		class(Class, Parent, NewProperties, R, O),
 		ActualKB,
-		NewKB),
+		NewKB),!,
     save_kb('kb.txt', NewKB).
 
 appendProperty(ActualProperties, Name, yes, NewProperties):-
