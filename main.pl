@@ -191,7 +191,7 @@ eliminar_propiedad_clase(Clase,Propiedad,OriginalKB,Nueva_KB) :-
 	borrar_elementos_misma_propiedad(Propiedad,Props,Tmp),
 	eliminar_elemento([not(Propiedad),_],Tmp,Tmp2),
 	eliminar_elemento([Propiedad,_],Tmp2,Nueva_props).
-agregar_propiedad_class(Clase,Nueva_prop,Valor,OriginalKB,Nueva_KB) :-
+agregar_propiedad_clase(Clase,Nueva_prop,Valor,OriginalKB,Nueva_KB) :-
 	cambiar_elemento(class(Clase,Padre,Props,Rel,Objetos),class(Clase,Padre,Nueva_props,Rel,Objetos),OriginalKB,Nueva_KB),
 	append_propiedad(Props,Nueva_prop,Valor,Nueva_props).
 agregar_propiedad_objeto(Objeto,Nueva_prop,Valor,OriginalKB,Nueva_KB) :-
@@ -927,6 +927,8 @@ forEachClassAdd([class(_, _, _, _, Objects)|T])
 
 %------------------------------
 % 2(c) Agregar nueva relacion de clase:  
+% Cuando sea not agregar si el parentesis
+% Agregar nueva propiedad a una clase:
 %------------------------------
 agregar_relacion_clase(Clase1,Clase2,Nueva_rel,Nueva_KB):-
 	open_kb('kb.txt',KB),
@@ -1181,6 +1183,7 @@ cambiar_valor_propiedad_objeto(Objeto,Propiedad,Nuevo_valor,Nueva_KB):-
 
 %------------------------------
 % 4(b) Modificar el valor de una propiedad específica de una clase 
+% Hacerlo mas general
 %------------------------------
 cambiar_valor_propiedad_clase(Clase,Propiedad,Nuevo_valor,Nueva_KB):-
 	open_kb('kb.txt',KB),
