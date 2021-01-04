@@ -105,9 +105,9 @@ objetos_clase(_,_,unknown).
 %Cambiar elementos de la KB
 cambiar_elemento(_,_,[],[]).
 cambiar_elemento(X,Y,[X|T],[Y|N]):-
-	cambiar_elemento(X,Y,T,N),!.
+	cambiar_elemento(X,Y,T,N).
 cambiar_elemento(X,Y,[H|T],[H|N]):-
-	cambiar_elemento(X,Y,T,N),!.
+	cambiar_elemento(X,Y,T,N).
 
 %Cambiar realaciones de la KB
 cambiar_relacion(_,_,[],[]).
@@ -867,16 +867,6 @@ getObjectPropertyValue(_, _, _, null).
 es_elemento(X,[X|_]).
 es_elemento(X,[_|Y]):-
 	es_elemento(X,Y).
-
-%Cambiar elementos de la KB
-
-cambiar_elemento(_,_,[],[]).
-
-cambiar_elemento(X,Y,[X|T],[Y|N]):-
-	cambiar_elemento(X,Y,T,N).
-
-cambiar_elemento(X,Y,[H|T],[H|N]):-
-	cambiar_elemento(X,Y,T,N).
 
 %=================================================================================================
 %==== PROYECTO ====
