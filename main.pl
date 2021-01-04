@@ -597,6 +597,84 @@ filterUniqueProperties([H|T],[H|U]):-
 %------------------------------
 % Obtener propiedades de un objeto:
 %------------------------------
+deleteAllElementsWithSamePropertySingle(_,[],[]).
+
+deleteAllElementsWithSamePropertySingle(X,[X=>_|T],N):-
+	deleteAllElementsWithSamePropertySingle(X,T,N).
+
+deleteAllElementsWithSamePropertySingle(X,[H|T],[H|N]):-
+	deleteAllElementsWithSamePropertySingle(X,T,N).
+
+delete_repeated_properties([],[]).
+
+delete_repeated_properties([P=>V|T],[P=>V|NewT]):-
+	deleteAllElementsWithSamePropertySingle(P,T,L1),
+	deleteElement(not(P=>V),L1,L2),
+	delete_repeated_properties(L2,NewT),!.
+
+delete_repeated_properties([not(P=>V)|T],[not(P=>V)|NewT]):-
+	deleteAllElementsWithSameNegatedPropertySingle(P,T,L1),
+	deleteElement(P=>V,L1,L2),
+	delete_repeated_properties(L2,NewT),!.
+
+delete_repeated_properties([not(H)|T],[not(H)|NewT]):-
+	deleteElement(not(H),T,L1),
+	deleteElement(H,L1,L2),
+	delete_repeated_properties(L2,NewT),!.
+
+delete_repeated_properties([H|T],[H|NewT]):-
+	deleteElement(H,T,L1),
+	deleteElement(not(H),L1,L2),
+	delete_repeated_properties(L2,NewT),!.
+
+delete_repeated_abductions([],[]).
+
+delete_repeated_abductions([El:Pref|T],[El:Pref|NewT]):-
+	deleteAbuction(El,T,L2),
+	delete_repeated_abductions(L2,NewT),!.
+
+deleteAbuction(_,[],[]):-!.
+deleteAbuction((Abd=>Val),[(Abd=>_):_|T],NewL):-
+	deleteAbuction((Abd=>Val),T,NewL).
+deleteAbuction(Abd,[Abd:_|T],NewL):-
+	deleteAbuction(Abd,T,NewL).
+deleteAbuction(Abd,[H:HV|T],[H:HV|NewL]):-
+	deleteAbuction(Abd,T,NewL).
+
+unir_lista([],L,L).
+unir_lista([H|T],L,[H|M]):-
+	unir_lista(T,L,M).
+
+parte_de(E,[E|_]).
+parte_de(E,[_|T]):-
+	parte_de(E,T).
+
+ordenar(L, S):- 
+	permutacion(L, S), 
+	ordered(S). 
+permutacion([], []). 
+permutacion(L, [H|R]):- 
+	uno(L, H, L1), 
+	permutacion(L1, R). 
+uno([H|T], H, T). 
+uno([X|R], H, [X|T]):- 
+	uno(R, H, T). 
+ordered([]). 
+ordered([_]). 
+ordered([X,Y|T]):-
+	X=[_,ValX],
+	Y=[_,ValY],
+	ValX=<ValY,
+	ordered([Y|T]). 
+
+preordenar([],_,[]).
+preordenar(['?'|Pref],Aux,PrefF):-
+	ordenar(Aux,AuxO),
+	preordenar(Pref,[],PrefO),
+	unir_lista(AuxO,PrefO,PrefF).
+preordenar([H|Pref],Aux,PrefO):-
+	preordenar(Pref,[H|Aux],PrefO).
+
 %%%Prefer handler
 
 prefer(Prop,NewProp):-
@@ -605,8 +683,6 @@ prefer(Prop,NewProp):-
 	delete_repeated_properties(PropE,PropEE),
 	preordenar(Pref,[],PrefO),
 	prefer_handler(PrefO,PropEE,NewProp).
-	
-
 
 prefer_extract([],[],[]).
 prefer_extract([[H,Peso]|T],TProp,[[H,Peso]|TP]):-
