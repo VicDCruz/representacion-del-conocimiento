@@ -66,10 +66,10 @@ extrae_nombres_objetos([[id=>Nombre,_,_]|T],Objetos):-
 
 hijos_lista_clase([],_,[]).
 
-hijos_lista_clase([Hijo|T],KB,Nietos,):-
+hijos_lista_clase([Hijo|T],KB,Nietos):-
 	hijos_clase(Hijo,KB,Hijos),
 	hijos_lista_clase(T,KB,Primos),
-	append(Hijos,Primos,Nietos,).
+	append(Hijos,Primos,Nietos).
 
 descendientes_clase(Clase,KB,Descendientes):-
 	verifica_clase(Clase,KB,yes),
@@ -105,9 +105,9 @@ objetos_clase(_,_,unknown).
 %Cambiar elementos de la KB
 cambiar_elemento(_,_,[],[]).
 cambiar_elemento(X,Y,[X|T],[Y|N]):-
-	cambiar_elemento(X,Y,T,N).
+	cambiar_elemento(X,Y,T,N),!.
 cambiar_elemento(X,Y,[H|T],[H|N]):-
-	cambiar_elemento(X,Y,T,N).
+	cambiar_elemento(X,Y,T,N),!.
 
 %Cambiar realaciones de la KB
 cambiar_relacion(_,_,[],[]).
@@ -311,11 +311,13 @@ deleteElement(X,[H|T],[H|N]):-
 %------------------------------
 % Cambiar un elemento
 %------------------------------
-changeElement(X,Y,[X|T],[Y|N]):-
-	changeElement(X,Y,T,N).
+changeElement(_, _, [], []).
 
-changeElement(X,Y,[H|T],[H|N]):-
-	changeElement(X,Y,T,N).
+changeElement(X, Y, [X|T], [Y|N]):-
+	changeElement(X, Y, T, N).
+
+changeElement(X, Y, [H|T], [H|N]):-
+	changeElement(X, Y, T, N).
 
 %------------------------------
 % Encontrar una propiedad
@@ -595,8 +597,232 @@ filterUniqueProperties([H|T],[H|U]):-
 	filterUniqueProperties(R2, U),!.
 
 %------------------------------
+% Eliminar elementos con la misma propiedad:
+%------------------------------
+deleteAllElementsWithSameProperty(_,[],[]).
+
+deleteAllElementsWithSameProperty(X,[[X=>_,_]|T],N):-
+	deleteAllElementsWithSameProperty(X,T,N).
+
+deleteAllElementsWithSameProperty(X,[H|T],[H|N]):-
+	deleteAllElementsWithSameProperty(X,T,N).
+
+%------------------------------
 % Obtener propiedades de un objeto:
 %------------------------------
+deleteAllElementsWithSamePropertySingle(_,[],[]).
+
+deleteAllElementsWithSamePropertySingle(X,[X=>_|T],N):-
+	deleteAllElementsWithSamePropertySingle(X,T,N).
+
+deleteAllElementsWithSamePropertySingle(X,[H|T],[H|N]):-
+	deleteAllElementsWithSamePropertySingle(X,T,N).
+
+delete_repeated_properties([],[]).
+
+delete_repeated_properties([P=>V|T],[P=>V|NewT]):-
+	deleteAllElementsWithSamePropertySingle(P,T,L1),
+	deleteElement(not(P=>V),L1,L2),
+	delete_repeated_properties(L2,NewT),!.
+
+delete_repeated_properties([not(P=>V)|T],[not(P=>V)|NewT]):-
+	deleteAllElementsWithSameNegatedPropertySingle(P,T,L1),
+	deleteElement(P=>V,L1,L2),
+	delete_repeated_properties(L2,NewT),!.
+
+delete_repeated_properties([not(H)|T],[not(H)|NewT]):-
+	deleteElement(not(H),T,L1),
+	deleteElement(H,L1,L2),
+	delete_repeated_properties(L2,NewT),!.
+
+delete_repeated_properties([H|T],[H|NewT]):-
+	deleteElement(H,T,L1),
+	deleteElement(not(H),L1,L2),
+	delete_repeated_properties(L2,NewT),!.
+
+delete_repeated_abductions([],[]).
+
+delete_repeated_abductions([El:Pref|T],[El:Pref|NewT]):-
+	deleteAbuction(El,T,L2),
+	delete_repeated_abductions(L2,NewT),!.
+
+deleteAbuction(_,[],[]):-!.
+deleteAbuction((Abd=>Val),[(Abd=>_):_|T],NewL):-
+	deleteAbuction((Abd=>Val),T,NewL).
+deleteAbuction(Abd,[Abd:_|T],NewL):-
+	deleteAbuction(Abd,T,NewL).
+deleteAbuction(Abd,[H:HV|T],[H:HV|NewL]):-
+	deleteAbuction(Abd,T,NewL).
+
+unir_lista([],L,L).
+unir_lista([H|T],L,[H|M]):-
+	unir_lista(T,L,M).
+
+parte_de(E,[E|_]).
+parte_de(E,[_|T]):-
+	parte_de(E,T).
+
+ordenar(L, S):- 
+	permutacion(L, S), 
+	ordered(S). 
+permutacion([], []). 
+permutacion(L, [H|R]):- 
+	uno(L, H, L1), 
+	permutacion(L1, R). 
+uno([H|T], H, T). 
+uno([X|R], H, [X|T]):- 
+	uno(R, H, T). 
+ordered([]). 
+ordered([_]). 
+ordered([X,Y|T]):-
+	X=[_,ValX],
+	Y=[_,ValY],
+	ValX=<ValY,
+	ordered([Y|T]). 
+
+preordenar([],_,[]).
+preordenar(['?'|Pref],Aux,PrefF):-
+	ordenar(Aux,AuxO),
+	preordenar(Pref,[],PrefO),
+	unir_lista(AuxO,PrefO,PrefF).
+preordenar([H|Pref],Aux,PrefO):-
+	preordenar(Pref,[H|Aux],PrefO).
+
+%%%Prefer handler
+
+prefer(Prop,NewProp):-
+	%print(Prop),
+	prefer_extract(Prop,PropE,Pref),
+	delete_repeated_properties(PropE,PropEE),
+	preordenar(Pref,[],PrefO),
+	prefer_handler(PrefO,PropEE,NewProp).
+
+prefer_extract([],[],[]).
+prefer_extract([[H,Peso]|T],TProp,[[H,Peso]|TP]):-
+	Peso\=0,
+	prefer_extract(T,TProp,TP).
+prefer_extract([[H,0]|T],[H|TProp],TP):-
+	prefer_extract(T,TProp,TP).
+prefer_extract([_|T],TProp,['?'|TP]):-
+	prefer_extract(T,TProp,TP).
+
+
+prefer_handler([],NewProp,NewProp).
+%Caso 1.1 preferencia x,y => x,y
+prefer_handler([[(Pref=>'-')=>>(El=>'-'),_]|T],Prop,NewProp):-
+	delete_repeated_properties(Prop,NProp),
+	parte_de((Pref=>Val),NProp),
+	unir_lista(Prop,[El=>Val],NP),
+	prefer_handler(T,NP,NewProp).
+%Caso 1.2 preferencia x,y => x,val
+prefer_handler([[(Pref=>'-')=>>(El=>ValE),_]|T],Prop,NewProp):-
+	parte_de((Pref=>_),Prop),
+	unir_lista(Prop,[El=>ValE],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 2 preferencia x,val=>x,valE
+prefer_handler([[(Pref=>Val)=>>(El=>ValE),_]|T],Prop,NewProp):-
+	delete_repeated_properties(Prop,NProp),
+	parte_de((Pref=>Val),NProp),
+	unir_lista(Prop,[El=>ValE],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 3.1 preferencia x => x , x,val=>x, x=>x,val
+prefer_handler([[Pref=>>El,_]|T],Prop,NewProp):-
+	parte_de(Pref,Prop),
+	unir_lista(Prop,[El],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 3.2 preferencia x,y=>x
+prefer_handler([[(Pref=>'-')=>>El,_]|T],Prop,NewProp):-
+	parte_de((Pref=>_),Prop),
+	unir_lista(Prop,[El],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 3.3 preferencia '-'=>x,val
+prefer_handler([['-'=>>(El=>Val),_]|T],Prop,NewProp):-
+	unir_lista(Prop,[El=>Val],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 3.4 preferencia '-'=>x
+prefer_handler([['-'=>>El,_]|T],Prop,NewProp):-
+	unir_lista(Prop,[El],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 4.1 antecedentes de preferencia caso 1 x,y => x,y
+prefer_handler([[(Pref=>'-')=>>(El=>'-'),_]|T],Prop,NewProp):-
+	parte_de([_=>>(Pref=>_),_],T),
+	prefer_handler(T,Prop,PropA),
+	delete_repeated_properties(PropA,NPropA),
+	parte_de((Pref=>Val),NPropA),
+	unir_lista(Prop,[El=>Val],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 4.2 antecedentes de preferencia caso 2 x,val=>x,valE
+prefer_handler([[(Pref=>Val)=>>(El=>ValE),_]|T],Prop,NewProp):-
+	parte_de([_=>>(Pref=>Val),_],T),
+	prefer_handler(T,Prop,PropA),
+	delete_repeated_properties(PropA,NPropA),
+	parte_de((Pref=>Val),NPropA),
+	unir_lista(Prop,[El=>ValE],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 4.3 antecedentes de preferencia caso x => x
+prefer_handler([[Pref=>>El,_]|T],Prop,NewProp):-
+	parte_de([_=>>Pref,_],T),
+	prefer_handler(T,Prop,PropA),
+	parte_de(Pref,PropA),
+	unir_lista(Prop,[El],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 5.1 lista caso =>x,y
+prefer_handler([[PrefL=>>(El=>'-'),_]|T],Prop,NewProp):-
+	prefer_handlerL(PrefL,T,Prop,Val),
+	unir_lista(Prop,[El=>Val],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 5.2 lista caso =>x,val
+prefer_handler([[PrefL=>>(El=>Val),_]|T],Prop,NewProp):-
+	prefer_handlerL(PrefL,T,Prop,Val),
+	unir_lista(Prop,[El=>Val],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 5.3 lista caso =>x
+prefer_handler([[PrefL=>>El,_]|T],Prop,NewProp):-
+	prefer_handlerL(PrefL,T,Prop),
+	unir_lista(Prop,[El],NP),
+	prefer_handler(T,NP,NewProp).
+%caso default, si no la encuentra.
+prefer_handler([_|T],Prop,NewProp):-
+	prefer_handler(T,Prop,NewProp).
+
+%%manejo de lista
+prefer_handlerL([],_,_).
+%caso x
+prefer_handlerL([Pref|T],LPref,Prop):-
+	parte_de(Pref,Prop),
+	prefer_handlerL(T,LPref,Prop).
+%caso antecedentes x
+prefer_handlerL([Pref|T],LPref,Prop):-
+	parte_de([_=>>Pref,_],LPref),
+	prefer_handler(LPref,Prop,PropA),
+	parte_de(Pref,PropA),
+	prefer_handlerL(T,LPref,Prop).
+prefer_handlerL([],_,_,_).
+%caso x,y
+prefer_handlerL([(Pref=>'-')|T],LPref,Prop,Val):-
+	delete_repeated_properties(Prop,NProp),
+	parte_de((Pref=>Val),NProp),
+	prefer_handlerL(T,LPref,Prop,Val),!.
+%caso x,val
+prefer_handlerL([(Pref=>Val)|T],LPref,Prop,Val):-
+	delete_repeated_properties(Prop,NProp),
+	parte_de((Pref=>Val),NProp),
+	prefer_handlerL(T,LPref,Prop,Val).
+%caso antecedentes x,y
+prefer_handlerL([(Pref=>'-')|T],LPref,Prop,Val):-
+	parte_de([_=>>(Pref=>_),_],LPref),
+	prefer_handler(LPref,Prop,PropA),
+	delete_repeated_properties(PropA,NPropA),
+	parte_de((Pref=>Val),NPropA),
+	prefer_handlerL(T,LPref,Prop,Val).
+%caso antecedentes x,val
+prefer_handlerL([(Pref=>Val)|T],LPref,Prop,Val):-
+	parte_de([_=>>(Pref=>Val),_],LPref),
+	prefer_handler(LPref,Prop,PropA),
+	delete_repeated_properties(PropA,NPropA),
+	parte_de((Pref=>Val),NPropA),
+	prefer_handlerL(T,LPref,Prop,Val).
+
 getObjectProperties(Object, KB, AllProperties):-
 	isObject(Object, KB, yes),
 	getPropertiesInObject(Object, KB, ObjectProperties),
@@ -605,7 +831,8 @@ getObjectProperties(Object, KB, AllProperties):-
 	mergeAncestorsProperties([Class|Ancestors], KB, ClassProperties),
 	append(ObjectProperties, ['UNKNOWN'], ObjectProperties2),
 	append(ObjectProperties2, ClassProperties, Temp),
-	filterUniqueProperties(Temp, AllProperties),!.
+	prefer(Temp, TempPref),
+	filterUniqueProperties(TempPref, AllProperties),!.
 
 getObjectProperties(_, _, null).
 
@@ -796,8 +1023,8 @@ clase_objeto(Objeto, Return) :-
 
 prop_objeto(_,[],desconocida):-!.
 
-prop_objeto(Objeto,[class(_,_,Prop,_,Objetos)|_],Prop):-
-	elemento_en_arreglo([id=>Objeto,_,_],Objetos),!.
+prop_objeto(Objeto,[class(_,_,_,_,Objetos)|_],Prop):-
+	elemento_en_arreglo([id=>Objeto,Prop,_],Objetos),!.
 
 prop_objeto(Objeto,[_|T],Prop):-
 	prop_objeto(Objeto,T,Prop).
@@ -828,8 +1055,8 @@ propiedad_clase(Clase, Return) :-
 
 rel_objeto(_,[],desconocida):-!.
 
-rel_objeto(Objeto,[class(_,_,_,Rel,Objetos)|_],Rel):-
-	elemento_en_arreglo([id=>Objeto,_,_],Objetos),!.
+rel_objeto(Objeto,[class(_,_,_,_,Objetos)|_],Rel):-
+	elemento_en_arreglo([id=>Objeto,_,Rel],Objetos),!.
 
 rel_objeto(Objeto,[_|T],Rel):-
 	rel_objeto(Objeto,T,Rel).
@@ -859,7 +1086,7 @@ relacion_clase(Clase, Return) :-
 %------------------------------
 % Definir la base antes: open_kb('kb.txt',KB)
 
-agregar_clase(Nueva_clase,Padre,Nueva_KB) :-
+agregar_clase(Nueva_clase,Padre):-
 	open_kb('kb.txt',KB),
 	append(KB,[class(Nueva_clase,Padre,[],[],[])],Nueva_KB),
     save_kb('kb.txt',Nueva_KB).
@@ -868,7 +1095,7 @@ agregar_clase(Nueva_clase,Padre,Nueva_KB) :-
 % 2(a) Agregar nuevo objeto:  
 %------------------------------
 
-agregar_objeto(Nuevo_objeto,Clase,Nueva_KB) :-
+agregar_objeto(Nuevo_objeto,Clase):-
 	open_kb('kb.txt',KB),
 	cambiar_elemento(class(Clase,Padre,Prop,Rel,Objectos),class(Clase,Padre,Prop,Rel,Nuevos_objectos),KB,Nueva_KB),
 	append(Objectos,[[id=>Nuevo_objeto,[],[]]],Nuevos_objectos),
@@ -904,26 +1131,21 @@ appendProperty(ActualProperties, Name, Value, NewProperties):-
 %------------------------------
 % 2(b) Agregar nueva propiedad a un objeto:
 %------------------------------
-agregar_propiedad_objeto(Object, NewProperty, Value) :-
+agregar_propiedad_objeto(Object, Name, Value) :-
     open_kb('kb.txt', ActualKB),
-    forEachClassAdd(ActualKB).
-
-forEachClassAdd([]).
-forEachClassAdd([class(_, _, _, _, Objects)|T])
-    forEachClassAdd(T),
-	existsElement([id=>Object, Properties, Relations], Objects),
-	replaceAll(
-        [id=>Object, Properties, Relations],
-        [id=>Object, NewProperties, Relations],
-        Objects,
-        NewObjects),
-	replaceAll(
-        class(Class, Parent, P, R, Objects),
-        class(Class, Parent, P, R, NewObjects),
-        ActualKB,
-        NewKB),
-	appendProperty(Properties, NewProperty, Value, NewProperties),
-    save_kb('kb.txt', NewKB).
+	changeElement(
+		class(Class, Parent, P, R, Objects),
+		class(Class, Parent, P, R, NewObjects),
+		ActualKB,
+		NewKB),
+	existsElement([id=>Object, ActualProperties, Relations], Objects),
+	changeElement(
+		[id=>Object, ActualProperties, Relations],
+		[id=>Object, NewProperties, Relations],
+		Objects,
+		NewObjects),
+	appendProperty(ActualProperties, Name, Value, NewProperties),
+    save_kb('kb.txt', NewKB),!.
 
 %------------------------------
 % 2(c) Agregar nueva relacion de clase:  
@@ -1022,6 +1244,9 @@ cancel_relation(Object,[[V=>Lst,W]|T],NewT):-
             )
         ).
 
+cancel_relation(Object,[H|T],[H|NewT]):-
+	cancel_relation(Object,T,NewT).
+
 del_relations(_,[],[]).%374
 
 del_relations(Object,[[id=>N,P,R]|T],[[id=>N,P,NewR]|NewT]):-
@@ -1051,10 +1276,15 @@ eliminar_objeto(Objeto, KBFinal) :-
 %------------------------------
 eliminar_propiedad_clase(Class, Property):-
     open_kb('kb.txt', ActualKB),
-    findProperty(ActualKB, Class, Properties),
-	deleteAllWithProperty(Property, Properties, Aux),
+    findProperty(ActualKB, Class, ActualProperties),
+	deleteAllWithProperty(Property, ActualProperties, Aux),
 	deleteElement([not(Property), _], Aux, Aux2),
 	deleteElement([Property, _], Aux2, NewProperties),
+	replaceAll(
+		class(Class, P, ActualProperties, R, O),
+		class(Class, P, NewProperties, R, O),
+		ActualKB,
+		NewKB),!,
     save_kb('kb.txt', NewKB).
 
 deleteAllWithProperty(_, [], []).
@@ -1070,20 +1300,17 @@ deleteAllWithProperty(X, [H|T], [H|N]):-
 %------------------------------
 eliminar_propiedad_objeto(Object, Property):-
     open_kb('kb.txt', ActualKB),
-    forEachClassDelete(ActualKB).
-
-forEachClassDelete([|T])
-    forEachClassAdd(T),
+    changeElement(
+		class(Class, Parent, Props, Rels, Objects),
+		class(Class, Parent, Props, Rels, NewObjects),
+		ActualKB,
+		NewKB),
 	existsElement([id=>Object, Properties, Relations], Objects),
-	changeElement(
-        [id=>Object, Properties, Relations],
-        [id=>Object, NewProperties, Relations],
-        Objects,
-        NewObjects),
-	deleteAllWithProperty(Property, Properties, Aux),
-	deleteElement([not(Property),_], Aux, Aux2),
-	deleteElement([Property,_], Aux2, NewProperties),
-    save_kb('kb.txt', NewKB).
+	changeElement([id=>Object, Properties, Relations], [id=>Object, NewProperties, Relations], Objects, NewObjects),
+	deleteAllElementsWithSameProperty(Property, Properties, Aux),
+	deleteElement([not(Property), _], Aux, Aux2),
+	deleteElement([Property, _], Aux2, NewProperties),
+    save_kb('kb.txt', NewKB),!.
 
 %-------------------------------------
 % 3(c) Eliminar una relación de una clase:  
@@ -1119,13 +1346,13 @@ eliminar_elementos_misma_prop_negada(X,[Y|L],[Y|R]):-
 
 
 
-eliminar_relacion_clase(Clase,not(Relacion),Nueva_KB) :-
+eliminar_relacion_clase(Clase,not(Relacion)):-
 	open_kb('kb.txt',KB),
 	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,NuevasRels,Objectos),KB,Nueva_KB),
 	eliminar_elementos_misma_prop_negada(Relacion,Rels,NuevasRels),
 	save_kb('kb.txt', Nueva_KB).
 
-eliminar_relacion_clase(Clase,Relacion,Nueva_KB) :-
+eliminar_relacion_clase(Clase,Relacion):-
 	open_kb('kb.txt',KB),
 	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,NuevasRels,Objectos),KB,Nueva_KB),
 	eliminar_elementos_misma_prop(Relacion,Rels,NuevasRels),
@@ -1135,7 +1362,7 @@ eliminar_relacion_clase(Clase,Relacion,Nueva_KB) :-
 % 3(c) Eliminar una relación de un objeto:  
 %-------------------------------------
 
-eliminar_relacion_objeto(Objecto,not(Relacion),Nueva_KB) :-
+eliminar_relacion_objeto(Objecto,not(Relacion)):-
 	open_kb('kb.txt',KB),
 	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,Rels,NuevosObjectos),KB,Nueva_KB),
 	es_elemento([id=>Objecto,Propiedades,Relaciones],Objectos),
@@ -1143,7 +1370,7 @@ eliminar_relacion_objeto(Objecto,not(Relacion),Nueva_KB) :-
 	eliminar_elementos_misma_prop_negada(Relacion,Relaciones,NuevasRelaciones),
 	save_kb('kb.txt',Nueva_KB).
 
-eliminar_relacion_objeto(Objecto,Relacion,Nueva_KB) :-
+eliminar_relacion_objeto(Objecto,Relacion):-
 	open_kb('kb.txt',KB),
 	cambiar_elemento(class(Clase,Padre,Props,Rels,Objectos),class(Clase,Padre,Props,Rels,NuevosObjectos),KB,Nueva_KB),
 	es_elemento([id=>Objecto,Propiedades,Relaciones],Objectos),
