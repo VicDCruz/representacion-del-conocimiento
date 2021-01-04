@@ -134,7 +134,7 @@ cambiar_relaciones_con_objeto(Objeto,Nuevo_nombre,[class(Clase,Padre,Prop,Rel,Ob
 %	append(X,Y,Z).
 
 append_relacion(Rel,not(Nueva_rel),Otro,NRel):-
-	append(Rel,[[not(Nueva_rel=>Otro),0]],NRel).
+	append(Rel,[[not(Nueva_rel)=>Otro,0]],NRel).
 append_relacion(Rel,Nueva_rel,Otro,NRel):-
 	append(Rel,[[Nueva_rel=>Otro,0]],NRel).
 
@@ -1413,7 +1413,7 @@ cambiar_valor_propiedad_clase(Clase,Propiedad,Nuevo_valor,Nueva_KB):-
 %------------------------------
 cambiar_valor_relacion_objeto(Objeto,Relacion,Nuevo_objeto_relacionado,Nueva_KB):-
 	open_kb('kb.txt',KB),
-	verifica_objeto_lista(Nuevo_objeto_relacionado,KB,yes),
+	%verifica_objeto_lista(Nuevo_objeto_relacionado,KB,yes),
 	elimina_relacion_objeto(Objeto,Relacion,KB,TemporalKB),
 	agrega_relacion_objeto(Objeto,Relacion,Nuevo_objeto_relacionado,TemporalKB,Nueva_KB),
 	save_kb('kb.txt',Nueva_KB).
@@ -1424,7 +1424,7 @@ cambiar_valor_relacion_objeto(Objeto,Relacion,Nuevo_objeto_relacionado,Nueva_KB)
 %------------------------------
 cambiar_valor_relacion_clase(Clase,Relacion,Nueva_clase_relacionada,Nueva_KB):-
 	open_kb('kb.txt',KB),
-	verifica_clase_lista(Nueva_clase_relacionada,KB,yes),
+	%verifica_clase_lista(Nueva_clase_relacionada,KB,yes),
 	elimina_relacion_clase(Clase,Relacion,KB,TemporalKB),
 	agrega_relacion_clase(Clase,Relacion,Nueva_clase_relacionada,TemporalKB,Nueva_KB),
 	save_kb('kb.txt',Nueva_KB).
