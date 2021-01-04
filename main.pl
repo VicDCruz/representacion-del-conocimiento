@@ -66,10 +66,10 @@ extrae_nombres_objetos([[id=>Nombre,_,_]|T],Objetos):-
 
 hijos_lista_clase([],_,[]).
 
-hijos_lista_clase([Hijo|T],KB,Nietos,):-
+hijos_lista_clase([Hijo|T],KB,Nietos):-
 	hijos_clase(Hijo,KB,Hijos),
 	hijos_lista_clase(T,KB,Primos),
-	append(Hijos,Primos,Nietos,).
+	append(Hijos,Primos,Nietos).
 
 descendientes_clase(Clase,KB,Descendientes):-
 	verifica_clase(Clase,KB,yes),
@@ -311,11 +311,13 @@ deleteElement(X,[H|T],[H|N]):-
 %------------------------------
 % Cambiar un elemento
 %------------------------------
-changeElement(X,Y,[X|T],[Y|N]):-
-	changeElement(X,Y,T,N).
+changeElement(_, _, [], []).
 
-changeElement(X,Y,[H|T],[H|N]):-
-	changeElement(X,Y,T,N).
+changeElement(X, Y, [X|T], [Y|N]):-
+	changeElement(X, Y, T, N).
+
+changeElement(X, Y, [H|T], [H|N]):-
+	changeElement(X, Y, T, N).
 
 %------------------------------
 % Encontrar una propiedad
@@ -593,6 +595,17 @@ filterUniqueProperties([H|T],[H|U]):-
 	deleteElement(H, T, R1),
 	deleteElement(not(H), R1, R2),
 	filterUniqueProperties(R2, U),!.
+
+%------------------------------
+% Eliminar elementos con la misma propiedad:
+%------------------------------
+deleteAllElementsWithSameProperty(_,[],[]).
+
+deleteAllElementsWithSameProperty(X,[[X=>_,_]|T],N):-
+	deleteAllElementsWithSameProperty(X,T,N).
+
+deleteAllElementsWithSameProperty(X,[H|T],[H|N]):-
+	deleteAllElementsWithSameProperty(X,T,N).
 
 %------------------------------
 % Obtener propiedades de un objeto:
@@ -1118,26 +1131,21 @@ appendProperty(ActualProperties, Name, Value, NewProperties):-
 %------------------------------
 % 2(b) Agregar nueva propiedad a un objeto:
 %------------------------------
-agregar_propiedad_objeto(Object, NewProperty, Value) :-
+agregar_propiedad_objeto(Object, Name, Value) :-
     open_kb('kb.txt', ActualKB),
-    forEachClassAdd(ActualKB).
-
-forEachClassAdd([]).
-forEachClassAdd([class(_, _, _, _, Objects)|T])
-    forEachClassAdd(T),
-	existsElement([id=>Object, Properties, Relations], Objects),
-	replaceAll(
-        [id=>Object, Properties, Relations],
-        [id=>Object, NewProperties, Relations],
-        Objects,
-        NewObjects),
-	replaceAll(
-        class(Class, Parent, P, R, Objects),
-        class(Class, Parent, P, R, NewObjects),
-        ActualKB,
-        NewKB),
-	appendProperty(Properties, NewProperty, Value, NewProperties),
-    save_kb('kb.txt', NewKB).
+	changeElement(
+		class(Class, Parent, P, R, Objects),
+		class(Class, Parent, P, R, NewObjects),
+		ActualKB,
+		NewKB),
+	existsElement([id=>Object, ActualProperties, Relations], Objects),
+	changeElement(
+		[id=>Object, ActualProperties, Relations],
+		[id=>Object, NewProperties, Relations],
+		Objects,
+		NewObjects),
+	appendProperty(ActualProperties, Name, Value, NewProperties),
+    save_kb('kb.txt', NewKB),!.
 
 %------------------------------
 % 2(c) Agregar nueva relacion de clase:  
@@ -1287,25 +1295,17 @@ deleteAllWithProperty(X, [H|T], [H|N]):-
 %------------------------------
 eliminar_propiedad_objeto(Object, Property):-
     open_kb('kb.txt', ActualKB),
-    forEachClassDelete(ActualKB).
-
-forEachClassDelete([|T])
-    forEachClassAdd(T),
-	existsElement([id=>Object, ActualProperties, Relations], Objects),
-	changeElement(
-        [id=>Object, ActualProperties, Relations],
-        [id=>Object, NewProperties, Relations],
-        Objects,
-        NewObjects),
-	deleteAllWithProperty(Property, ActualProperties, Aux),
-	deleteElement([not(Property),_], Aux, Aux2),
-	deleteElement([Property,_], Aux2, NewProperties),
-	replaceAll(
-		class(Class, _, ActualProperties, R, O),
-		class(Class, _, NewProperties, R, O),
+    changeElement(
+		class(Class, Parent, Props, Rels, Objects),
+		class(Class, Parent, Props, Rels, NewObjects),
 		ActualKB,
-		NewKB),!,
-    save_kb('kb.txt', NewKB).
+		NewKB),
+	existsElement([id=>Object, Properties, Relations], Objects),
+	changeElement([id=>Object, Properties, Relations], [id=>Object, NewProperties, Relations], Objects, NewObjects),
+	deleteAllElementsWithSameProperty(Property, Properties, Aux),
+	deleteElement([not(Property), _], Aux, Aux2),
+	deleteElement([Property, _], Aux2, NewProperties),
+    save_kb('kb.txt', NewKB),!.
 
 %-------------------------------------
 % 3(c) Eliminar una relación de una clase:  
