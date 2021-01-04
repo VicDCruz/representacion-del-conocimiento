@@ -105,9 +105,9 @@ objetos_clase(_,_,unknown).
 %Cambiar elementos de la KB
 cambiar_elemento(_,_,[],[]).
 cambiar_elemento(X,Y,[X|T],[Y|N]):-
-	cambiar_elemento(X,Y,T,N).
+	cambiar_elemento(X,Y,T,N),!.
 cambiar_elemento(X,Y,[H|T],[H|N]):-
-	cambiar_elemento(X,Y,T,N).
+	cambiar_elemento(X,Y,T,N),!.
 
 %Cambiar realaciones de la KB
 cambiar_relacion(_,_,[],[]).
@@ -1086,7 +1086,7 @@ relacion_clase(Clase, Return) :-
 %------------------------------
 % Definir la base antes: open_kb('kb.txt',KB)
 
-agregar_clase(Nueva_clase,Padre) :-
+agregar_clase(Nueva_clase,Padre):-
 	open_kb('kb.txt',KB),
 	append(KB,[class(Nueva_clase,Padre,[],[],[])],Nueva_KB),
     save_kb('kb.txt',Nueva_KB).
@@ -1095,7 +1095,7 @@ agregar_clase(Nueva_clase,Padre) :-
 % 2(a) Agregar nuevo objeto:  
 %------------------------------
 
-agregar_objeto(Nuevo_objeto,Clase) :-
+agregar_objeto(Nuevo_objeto,Clase):-
 	open_kb('kb.txt',KB),
 	cambiar_elemento(class(Clase,Padre,Prop,Rel,Objectos),class(Clase,Padre,Prop,Rel,Nuevos_objectos),KB,Nueva_KB),
 	append(Objectos,[[id=>Nuevo_objeto,[],[]]],Nuevos_objectos),
