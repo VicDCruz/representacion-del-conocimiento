@@ -627,7 +627,7 @@ searchPropertyValue(Attribute, [_|T], Value):-
 % Obtener valor de una propiedad de un objeto:
 %------------------------------
 getObjectPropertyValue(Object, Property, KB, Value):-
-	getObjectPropertyValue(Object, KB, yes),
+	isObject(Object, KB, yes),
 	getObjectProperties(Object, KB, Properties),
 	searchPropertyValue(Property, Properties, Value).
 
@@ -883,7 +883,7 @@ agregar_propiedad_clase(Class, Name, Value):-
 		class(Class, Parent, ActualProperties, R, O),
 		class(Class, Parent, NewProperties, R, O),
 		ActualKB,
-		NewKB),
+		NewKB),!,
     save_kb('kb.txt', NewKB).
 
 appendProperty(ActualProperties, Name, yes, NewProperties):-
