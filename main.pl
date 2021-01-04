@@ -597,6 +597,143 @@ filterUniqueProperties([H|T],[H|U]):-
 %------------------------------
 % Obtener propiedades de un objeto:
 %------------------------------
+%%%Prefer handler
+
+prefer(Prop,NewProp):-
+	%print(Prop),
+	prefer_extract(Prop,PropE,Pref),
+	delete_repeated_properties(PropE,PropEE),
+	preordenar(Pref,[],PrefO),
+	prefer_handler(PrefO,PropEE,NewProp).
+	
+
+
+prefer_extract([],[],[]).
+prefer_extract([[H,Peso]|T],TProp,[[H,Peso]|TP]):-
+	Peso\=0,
+	prefer_extract(T,TProp,TP).
+prefer_extract([[H,0]|T],[H|TProp],TP):-
+	prefer_extract(T,TProp,TP).
+prefer_extract([_|T],TProp,['?'|TP]):-
+	prefer_extract(T,TProp,TP).
+
+
+prefer_handler([],NewProp,NewProp).
+%Caso 1.1 preferencia x,y => x,y
+prefer_handler([[(Pref=>'-')=>>(El=>'-'),_]|T],Prop,NewProp):-
+	delete_repeated_properties(Prop,NProp),
+	parte_de((Pref=>Val),NProp),
+	unir_lista(Prop,[El=>Val],NP),
+	prefer_handler(T,NP,NewProp).
+%Caso 1.2 preferencia x,y => x,val
+prefer_handler([[(Pref=>'-')=>>(El=>ValE),_]|T],Prop,NewProp):-
+	parte_de((Pref=>_),Prop),
+	unir_lista(Prop,[El=>ValE],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 2 preferencia x,val=>x,valE
+prefer_handler([[(Pref=>Val)=>>(El=>ValE),_]|T],Prop,NewProp):-
+	delete_repeated_properties(Prop,NProp),
+	parte_de((Pref=>Val),NProp),
+	unir_lista(Prop,[El=>ValE],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 3.1 preferencia x => x , x,val=>x, x=>x,val
+prefer_handler([[Pref=>>El,_]|T],Prop,NewProp):-
+	parte_de(Pref,Prop),
+	unir_lista(Prop,[El],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 3.2 preferencia x,y=>x
+prefer_handler([[(Pref=>'-')=>>El,_]|T],Prop,NewProp):-
+	parte_de((Pref=>_),Prop),
+	unir_lista(Prop,[El],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 3.3 preferencia '-'=>x,val
+prefer_handler([['-'=>>(El=>Val),_]|T],Prop,NewProp):-
+	unir_lista(Prop,[El=>Val],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 3.4 preferencia '-'=>x
+prefer_handler([['-'=>>El,_]|T],Prop,NewProp):-
+	unir_lista(Prop,[El],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 4.1 antecedentes de preferencia caso 1 x,y => x,y
+prefer_handler([[(Pref=>'-')=>>(El=>'-'),_]|T],Prop,NewProp):-
+	parte_de([_=>>(Pref=>_),_],T),
+	prefer_handler(T,Prop,PropA),
+	delete_repeated_properties(PropA,NPropA),
+	parte_de((Pref=>Val),NPropA),
+	unir_lista(Prop,[El=>Val],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 4.2 antecedentes de preferencia caso 2 x,val=>x,valE
+prefer_handler([[(Pref=>Val)=>>(El=>ValE),_]|T],Prop,NewProp):-
+	parte_de([_=>>(Pref=>Val),_],T),
+	prefer_handler(T,Prop,PropA),
+	delete_repeated_properties(PropA,NPropA),
+	parte_de((Pref=>Val),NPropA),
+	unir_lista(Prop,[El=>ValE],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 4.3 antecedentes de preferencia caso x => x
+prefer_handler([[Pref=>>El,_]|T],Prop,NewProp):-
+	parte_de([_=>>Pref,_],T),
+	prefer_handler(T,Prop,PropA),
+	parte_de(Pref,PropA),
+	unir_lista(Prop,[El],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 5.1 lista caso =>x,y
+prefer_handler([[PrefL=>>(El=>'-'),_]|T],Prop,NewProp):-
+	prefer_handlerL(PrefL,T,Prop,Val),
+	unir_lista(Prop,[El=>Val],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 5.2 lista caso =>x,val
+prefer_handler([[PrefL=>>(El=>Val),_]|T],Prop,NewProp):-
+	prefer_handlerL(PrefL,T,Prop,Val),
+	unir_lista(Prop,[El=>Val],NP),
+	prefer_handler(T,NP,NewProp).
+%caso 5.3 lista caso =>x
+prefer_handler([[PrefL=>>El,_]|T],Prop,NewProp):-
+	prefer_handlerL(PrefL,T,Prop),
+	unir_lista(Prop,[El],NP),
+	prefer_handler(T,NP,NewProp).
+%caso default, si no la encuentra.
+prefer_handler([_|T],Prop,NewProp):-
+	prefer_handler(T,Prop,NewProp).
+
+%%manejo de lista
+prefer_handlerL([],_,_).
+%caso x
+prefer_handlerL([Pref|T],LPref,Prop):-
+	parte_de(Pref,Prop),
+	prefer_handlerL(T,LPref,Prop).
+%caso antecedentes x
+prefer_handlerL([Pref|T],LPref,Prop):-
+	parte_de([_=>>Pref,_],LPref),
+	prefer_handler(LPref,Prop,PropA),
+	parte_de(Pref,PropA),
+	prefer_handlerL(T,LPref,Prop).
+prefer_handlerL([],_,_,_).
+%caso x,y
+prefer_handlerL([(Pref=>'-')|T],LPref,Prop,Val):-
+	delete_repeated_properties(Prop,NProp),
+	parte_de((Pref=>Val),NProp),
+	prefer_handlerL(T,LPref,Prop,Val),!.
+%caso x,val
+prefer_handlerL([(Pref=>Val)|T],LPref,Prop,Val):-
+	delete_repeated_properties(Prop,NProp),
+	parte_de((Pref=>Val),NProp),
+	prefer_handlerL(T,LPref,Prop,Val).
+%caso antecedentes x,y
+prefer_handlerL([(Pref=>'-')|T],LPref,Prop,Val):-
+	parte_de([_=>>(Pref=>_),_],LPref),
+	prefer_handler(LPref,Prop,PropA),
+	delete_repeated_properties(PropA,NPropA),
+	parte_de((Pref=>Val),NPropA),
+	prefer_handlerL(T,LPref,Prop,Val).
+%caso antecedentes x,val
+prefer_handlerL([(Pref=>Val)|T],LPref,Prop,Val):-
+	parte_de([_=>>(Pref=>Val),_],LPref),
+	prefer_handler(LPref,Prop,PropA),
+	delete_repeated_properties(PropA,NPropA),
+	parte_de((Pref=>Val),NPropA),
+	prefer_handlerL(T,LPref,Prop,Val).
+
 getObjectProperties(Object, KB, AllProperties):-
 	isObject(Object, KB, yes),
 	getPropertiesInObject(Object, KB, ObjectProperties),
@@ -605,7 +742,8 @@ getObjectProperties(Object, KB, AllProperties):-
 	mergeAncestorsProperties([Class|Ancestors], KB, ClassProperties),
 	append(ObjectProperties, ['UNKNOWN'], ObjectProperties2),
 	append(ObjectProperties2, ClassProperties, Temp),
-	filterUniqueProperties(Temp, AllProperties),!.
+	prefer(Temp, TempPref),
+	filterUniqueProperties(TempPref, AllProperties),!.
 
 getObjectProperties(_, _, null).
 
@@ -1049,10 +1187,15 @@ eliminar_objeto(Objeto, KBFinal) :-
 %------------------------------
 eliminar_propiedad_clase(Class, Property):-
     open_kb('kb.txt', ActualKB),
-    findProperty(ActualKB, Class, Properties),
-	deleteAllWithProperty(Property, Properties, Aux),
+    findProperty(ActualKB, Class, ActualProperties),
+	deleteAllWithProperty(Property, ActualProperties, Aux),
 	deleteElement([not(Property), _], Aux, Aux2),
 	deleteElement([Property, _], Aux2, NewProperties),
+	replaceAll(
+		class(Class, P, ActualProperties, R, O),
+		class(Class, P, NewProperties, R, O),
+		ActualKB,
+		NewKB),!,
     save_kb('kb.txt', NewKB).
 
 deleteAllWithProperty(_, [], []).
@@ -1072,15 +1215,20 @@ eliminar_propiedad_objeto(Object, Property):-
 
 forEachClassDelete([|T])
     forEachClassAdd(T),
-	existsElement([id=>Object, Properties, Relations], Objects),
+	existsElement([id=>Object, ActualProperties, Relations], Objects),
 	changeElement(
-        [id=>Object, Properties, Relations],
+        [id=>Object, ActualProperties, Relations],
         [id=>Object, NewProperties, Relations],
         Objects,
         NewObjects),
-	deleteAllWithProperty(Property, Properties, Aux),
+	deleteAllWithProperty(Property, ActualProperties, Aux),
 	deleteElement([not(Property),_], Aux, Aux2),
 	deleteElement([Property,_], Aux2, NewProperties),
+	replaceAll(
+		class(Class, _, ActualProperties, R, O),
+		class(Class, _, NewProperties, R, O),
+		ActualKB,
+		NewKB),!,
     save_kb('kb.txt', NewKB).
 
 %-------------------------------------
