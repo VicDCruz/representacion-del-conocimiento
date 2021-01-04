@@ -1010,8 +1010,8 @@ clase_objeto(Objeto, Return) :-
 
 prop_objeto(_,[],desconocida):-!.
 
-prop_objeto(Objeto,[class(_,_,Prop,_,Objetos)|_],Prop):-
-	elemento_en_arreglo([id=>Objeto,_,_],Objetos),!.
+prop_objeto(Objeto,[class(_,_,_,_,Objetos)|_],Prop):-
+	elemento_en_arreglo([id=>Objeto,Prop,_],Objetos),!.
 
 prop_objeto(Objeto,[_|T],Prop):-
 	prop_objeto(Objeto,T,Prop).
@@ -1042,8 +1042,8 @@ propiedad_clase(Clase, Return) :-
 
 rel_objeto(_,[],desconocida):-!.
 
-rel_objeto(Objeto,[class(_,_,_,Rel,Objetos)|_],Rel):-
-	elemento_en_arreglo([id=>Objeto,_,_],Objetos),!.
+rel_objeto(Objeto,[class(_,_,_,_,Objetos)|_],Rel):-
+	elemento_en_arreglo([id=>Objeto,_,Rel],Objetos),!.
 
 rel_objeto(Objeto,[_|T],Rel):-
 	rel_objeto(Objeto,T,Rel).
@@ -1233,6 +1233,9 @@ cancel_relation(Object,[[V=>Lst,W]|T],NewT):-
              ; NewT = Tmp
             )
         ).
+
+cancel_relation(Object,[H|T],[H|NewT]):-
+	cancel_relation(Object,T,NewT).
 
 del_relations(_,[],[]).%374
 
