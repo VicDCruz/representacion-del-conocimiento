@@ -662,7 +662,7 @@ cambiar_elemento(X,Y,[H|T],[H|N]):-
 objetos_descendientes_todos_clase([],_,[]).
 
 objetos_descendientes_todos_clase([Clase|T],Todos_objetos):-
-	open_kb('C:\\Users\\uriel\\Documents\\GitHub\\representacion-del-conocimiento\\kb.txt',KB),
+	open_kb('kb.txt',KB),
 	objetos_solo_clase(Clase,KB,Objetos),
 	objetos_descendientes_todos_clase(T,KB,Resto),
 	append(Objetos,Resto,Todos_objetos),!.	
