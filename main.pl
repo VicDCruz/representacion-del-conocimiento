@@ -1392,7 +1392,7 @@ cambiar_nombre_objeto(Objeto,Nuevo_nombre,Nueva_KB) :-
 %------------------------------				
 % 4(b) Modificar el valor de una propiedad específica de un objeto 
 %------------------------------
-cambiar_valor_propiedad_objeto(Objeto,Propiedad,Nuevo_valor,Nueva_KB):-
+cambiar_valor_propiedad_objeto(Objeto,Propiedad,Nuevo_valor):-
 	eliminar_propiedad_objeto(Objeto,Propiedad),
 	agregar_propiedad_objeto(Objeto,Propiedad,Nuevo_valor).
 	
@@ -1400,7 +1400,7 @@ cambiar_valor_propiedad_objeto(Objeto,Propiedad,Nuevo_valor,Nueva_KB):-
 % 4(b) Modificar el valor de una propiedad específica de una clase 
 % Hacerlo mas general
 %------------------------------
-cambiar_valor_propiedad_clase(Clase,Propiedad,Nuevo_valor,Nueva_KB):-
+cambiar_valor_propiedad_clase(Clase,Propiedad,Nuevo_valor):-
 	eliminar_propiedad_clase(Clase,Propiedad),
 	agregar_propiedad_clase(Clase,Propiedad,Nuevo_valor).
 
