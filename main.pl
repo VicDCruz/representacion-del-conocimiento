@@ -43,7 +43,7 @@ atom_to_term(ATOM, TERM) :-
 %=================================================================================================
 %==== URIEL ====
 hijos_clase(Clase,KB,Respuesta):-
-	verifica_clase(Clase,KB,yes),
+	verifica_clase(Clase,KB,si),
 	hijos_clase(Clase,KB,Respuesta),!.
 
 hijos_clase(_,_,desconocida).
@@ -72,7 +72,7 @@ hijos_lista_clase([Hijo|T],KB,Nietos):-
 	append(Hijos,Primos,Nietos).
 
 descendientes_clase(Clase,KB,Descendientes):-
-	verifica_clase(Clase,KB,yes),
+	verifica_clase(Clase,KB,si),
 	hijos_clase(Clase,KB,Hijos),
 	todos_descendientes_clase(Hijos,KB,Descendientes),!.
 
@@ -100,7 +100,7 @@ extractObjectsNames([[id=>Name,_,_]|T],Objects):-
 	append([Name],Rest,Objects).
 
 objetos_solo_clase(Class,KB,Objects):-
-	isClass(Class,KB,yes),
+	isClass(Class,KB,si),
 	getOnlyObjectsInClass(Class,KB,ObjectsInClass),
 	getDescendantsClass(Class,KB,Sons),
 	getAllObjectsDescendantsClasses(Sons,KB,DescendantObjects),
@@ -116,7 +116,7 @@ getAllObjectsDescendantsClasses([Class|T],KB,AllObjects):-
 objetos_solo_clase(_,_,desconocida).
 
 objetos_clase(Clase,KB,Objetos):-	
-	verifica_clase(Clase,KB,yes),
+	verifica_clase(Clase,KB,si),
 	objetos_solo_clase(Clase,KB,Objetos_clase),
 	descendientes_clase(Clase,KB,Hijos),
 	objetos_descendientes_todos_clase(Hijos,KB,Descendientes_objetos),
@@ -163,7 +163,7 @@ append_relacion(Rel,Nueva_rel,Otro,NRel):-
 append_preferencia(Prop,Nueva_pref,Peso,NProp):-
 	append(Prop,[[Nueva_pref,Peso]],NProp).
 
-append_propiedad(Props,Nueva_prop,yes,Nueva_props):-
+append_propiedad(Props,Nueva_prop,si,Nueva_props):-
 	append(Props,[[Nueva_prop,0]],Nueva_props).
 append_propiedad(Props,Nueva_prop,no,Nueva_props):-
 	append(Props,[[not(Nueva_prop),0]],Nueva_props).
@@ -225,37 +225,37 @@ agregar_propiedad_objeto(Objeto,Nueva_prop,Valor,OriginalKB,Nueva_KB) :-
 verifica_objeto(_,[],desconocida):-!.
 verifica_objeto(Objeto,[class(_,_,_,_,O)|_],no):-
 	verifica_elemento([id=>not(Objeto),_,_],O).
-verifica_objeto(Objeto,[class(_,_,_,_,O)|_],yes):-
+verifica_objeto(Objeto,[class(_,_,_,_,O)|_],si):-
 	verifica_elemento([id=>Objeto,_,_],O).
 verifica_objeto(Objeto,[_|T],Respuesta):-
 	verifica_objeto(Objeto,T,Respuesta),!.
 
 verifica_objeto_lista(Objeto,KB,Res):-
 	verifica_objeto(Objeto,KB,Res),!.
-verifica_objeto_lista([],_,yes):-!.
+verifica_objeto_lista([],_,si):-!.
 verifica_objeto_lista([H|_],KB,desconocida):-
 	verifica_objeto(H,KB,desconocida).
 verifica_objeto_lista([H|_],KB,no):-
 	verifica_objeto(H,KB,no).
 verifica_objeto_lista([H|T],KB,Res):-
-	verifica_objeto(H,KB,yes),
+	verifica_objeto(H,KB,si),
 	verifica_objeto_lista(T,KB,Res).
 
 verifica_clase(_,[],desconocida):-!.
 verifica_clase(Clase,[class(not(Class),_,_,_,_)|_],no):-!.
-verifica_clase(Clase,[class(Clase,_,_,_,_)|_],yes):-!.
+verifica_clase(Clase,[class(Clase,_,_,_,_)|_],si):-!.
 verifica_clase(Clase,[_|T],Respuesta):-
 	verifica_clase(Clase,T,Respuesta).
 
 verifica_clase_lista(Clase,KB,Res):-
 	verifica_clase(Clase,KB,Res),!.
-verifica_clase_lista([],_,yes):-!.
+verifica_clase_lista([],_,si):-!.
 verifica_clase_lista([H|_],KB,desconocida):-
 	verifica_clase(H,KB,desconocida).
 verifica_clase_lista([H|_],KB,no):-
 	verifica_clase(H,KB,no).
 verifica_clase_lista([H|T],KB,Res):-
-	verifica_clase(H,KB,yes),
+	verifica_clase(H,KB,si),
 	verifica_clase_lista(T,KB,Res).
 
 
@@ -364,7 +364,7 @@ isClass(_, [], desconocida):-!.
 
 isClass(Class, [class(not(Class),_,_,_,_)|_], no):-!.
 
-isClass(Class, [class(Class,_,_,_,_)|_], yes):-!.
+isClass(Class, [class(Class,_,_,_,_)|_], si):-!.
 
 isClass(Class, [_|T], Answer):-
 	isClass(Class, T, Answer).
@@ -372,7 +372,7 @@ isClass(Class, [_|T], Answer):-
 isClassList(Class, KB, Ans):-
 	isClass(Class, KB, Ans),!.
 
-isClassList([], _, yes):-!.
+isClassList([], _, si):-!.
 
 isClassList([H|_], KB, desconocida):-
 	isClass(H, KB, desconocida).
@@ -381,7 +381,7 @@ isClassList([H|_], KB, no):-
 	isClass(H, KB, no).
 
 isClassList([H|T], KB, Ans):-
-	isClass(H, KB, yes),
+	isClass(H, KB, si),
 	isClassList(T, KB, Ans).
 
 %------------------------------
@@ -392,7 +392,7 @@ isObject(_, [], desconocida):-!.
 isObject(Object,[class(_, _, _, _, O)|_], no):-
 	existsElement([id=>not(Object), _, _], O).
 
-isObject(Object, [class(_, _, _, _, O)|_], yes):-
+isObject(Object, [class(_, _, _, _, O)|_], si):-
 	existsElement([id=>Object, _, _], O).
 
 isObject(Object, [_|T], Answer):-
@@ -400,13 +400,13 @@ isObject(Object, [_|T], Answer):-
 
 isObjectList(Object, KB, Ans):-
 	isObject(Object, KB, Ans),!.
-isObjectList([], _, yes):-!.
+isObjectList([], _, si):-!.
 isObjectList([H|_], KB, desconocida):-
 	isObject(H, KB, desconocida).
 isObjectList([H|_], KB, no):-
 	isObject(H, KB, no).
 isObjectList([H|T], KB, Ans):-
-	isObject(H, KB, yes),
+	isObject(H, KB, si),
 	isObjectList(T, KB, Ans).
 
 %------------------------------
@@ -452,7 +452,7 @@ getClassesChildren([H|T], KB, Children):-
 % Obtener todos los descendientes de una clase:
 %------------------------------
 getDescendantsClass(Class, KB, Descendants):-
-	isClass(Class, KB, yes),
+	isClass(Class, KB, si),
 	getClassChildren(Class, KB, Sons),
 	getAllDescendantsClass(Sons, KB, Descendants),!.
 
@@ -500,7 +500,7 @@ getDescendantsObjects([Class|T], KB, Res):-
 %------------------------------
 
 getClassObjects(Class, KB, R):-
-	isClass(Class, KB, yes),
+	isClass(Class, KB, si),
 	getDescendantsClass(Class, KB, Sons),
 	getDescendantsObjects(Sons, KB, OldChildren),
 	getNamesObjectsClass(Class, KB, ClassName),
@@ -846,7 +846,7 @@ prefer_handlerL([(Pref=>Val)|T],LPref,Prop,Val):-
 	prefer_handlerL(T,LPref,Prop,Val).
 
 getObjectProperties(Object, KB, AllProperties):-
-	isObject(Object, KB, yes),
+	isObject(Object, KB, si),
 	getPropertiesInObject(Object, KB, ObjectProperties),
 	getClassOfObject(Object, KB, Class),
 	getAncestorsList(Class, KB, Ancestors),
@@ -867,7 +867,7 @@ searchPropertyValue(Attribute, [Attribute=>Value|_], Value).
 
 searchPropertyValue(Attribute, [not(Attribute)|_], no).
 
-searchPropertyValue(Attribute, [Attribute|_], yes).
+searchPropertyValue(Attribute, [Attribute|_], si).
 
 searchPropertyValue(Attribute, [_|T], Value):-
 	searchPropertyValue(Attribute, T, Value).
@@ -876,7 +876,7 @@ searchPropertyValue(Attribute, [_|T], Value):-
 % Obtener valor de una propiedad de un objeto:
 %------------------------------
 getObjectPropertyValue(Object, Property, KB, Value):-
-	isObject(Object, KB, yes),
+	isObject(Object, KB, si),
 	getObjectProperties(Object, KB, Properties),
 	searchPropertyValue(Property, Properties, Value).
 
@@ -1129,7 +1129,7 @@ agregar_propiedad_clase(Class, Name, Value):-
 		NewKB),!,
     save_kb('kb.txt', NewKB).
 
-appendProperty(ActualProperties, Name, yes, NewProperties):-
+appendProperty(ActualProperties, Name, si, NewProperties):-
 	append(ActualProperties, [[Name, 0]], NewProperties).
 
 appendProperty(ActualProperties, Name, no, NewProperties):-
@@ -1429,7 +1429,7 @@ cambiar_valor_propiedad_clase(Clase,Propiedad,Nuevo_valor,Nueva_KB):-
 %------------------------------
 cambiar_valor_relacion_objeto(Objeto,Relacion,Nuevo_objeto_relacionado,Nueva_KB):-
 	open_kb('kb.txt',KB),
-	%verifica_objeto_lista(Nuevo_objeto_relacionado,KB,yes),
+	%verifica_objeto_lista(Nuevo_objeto_relacionado,KB,si),
 	elimina_relacion_objeto(Objeto,Relacion,KB,TemporalKB),
 	agrega_relacion_objeto(Objeto,Relacion,Nuevo_objeto_relacionado,TemporalKB,Nueva_KB),
 	save_kb('kb.txt',Nueva_KB).
@@ -1440,7 +1440,7 @@ cambiar_valor_relacion_objeto(Objeto,Relacion,Nuevo_objeto_relacionado,Nueva_KB)
 %------------------------------
 cambiar_valor_relacion_clase(Clase,Relacion,Nueva_clase_relacionada,Nueva_KB):-
 	open_kb('kb.txt',KB),
-	%verifica_clase_lista(Nueva_clase_relacionada,KB,yes),
+	%verifica_clase_lista(Nueva_clase_relacionada,KB,si),
 	elimina_relacion_clase(Clase,Relacion,KB,TemporalKB),
 	agrega_relacion_clase(Clase,Relacion,Nueva_clase_relacionada,TemporalKB,Nueva_KB),
 	save_kb('kb.txt',Nueva_KB).
