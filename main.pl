@@ -1017,7 +1017,7 @@ todas_clases(_,[]):-!.
 
 %% Clases de un objeto
 clase_objeto(Objeto, Return) :-
-	open_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',KB),
+	open_kb('kb.txt',KB),
 	clases_perteneciente_objeto(Objeto,KB,Return),
 	write('\n'),
 	write(Return),
