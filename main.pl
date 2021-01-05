@@ -46,7 +46,7 @@ hijos_clase(Clase,KB,Respuesta):-
 	verifica_clase(Clase,KB,yes),
 	hijos_clase(Clase,KB,Respuesta),!.
 
-hijos_clase(_,_,unknown).
+hijos_clase(_,_,desconocida).
 
 hijos_clase(_,[],[]).
 
@@ -76,7 +76,7 @@ descendientes_clase(Clase,KB,Descendientes):-
 	hijos_clase(Clase,KB,Hijos),
 	todos_descendientes_clase(Hijos,KB,Descendientes),!.
 
-descendientes_clase(_,_,unknown).
+descendientes_clase(_,_,desconocida).
 
 todos_descendientes_clase([],_,[]).
 
@@ -85,13 +85,35 @@ todos_descendientes_clase(Clases,KB,Descendientes):-
 	todos_descendientes_clase(Hijos,KB,Resto_descendientes),!,
 	append(Clases,Resto_descendientes,Descendientes).
 
-objetos_solo_clase(_,[],unknown):-!.
+getOnlyObjectsInClass(_,[],unknown):-!.
 
-objetos_solo_clase(Clase,[class(Clase,_,_,_,O)|_],Objetos):-
-	extrae_nombres_objetos(O,Objetos),!.
+getOnlyObjectsInClass(Class,[class(Class,_,_,_,O)|_],Objects):-
+	extractObjectsNames(O,Objects),!.
 
-objetos_solo_clase(Clase,[_|T],Objetos):-
-	objetos_solo_clase(Clase,T,Objetos),!.
+getOnlyObjectsInClass(Class,[_|T],Objects):-
+	getOnlyObjectsInClass(Class,T,Objects),!.
+	
+extractObjectsNames([],[]):-!.
+
+extractObjectsNames([[id=>Name,_,_]|T],Objects):-
+	extractObjectsNames(T,Rest),
+	append([Name],Rest,Objects).
+
+objetos_solo_clase(Class,KB,Objects):-
+	isClass(Class,KB,yes),
+	getOnlyObjectsInClass(Class,KB,ObjectsInClass),
+	getDescendantsClass(Class,KB,Sons),
+	getAllObjectsDescendantsClasses(Sons,KB,DescendantObjects),
+	append(ObjectsInClass,DescendantObjects,Objects),!.
+
+getAllObjectsDescendantsClasses([],_,[]).
+
+getAllObjectsDescendantsClasses([Class|T],KB,AllObjects):-
+	objetos_solo_clase(Class,KB,Objects),
+	getAllObjectsDescendantsClasses(T,KB,Rest),
+	append(Objects,Rest,AllObjects),!.
+
+objetos_solo_clase(_,_,desconocida).
 
 objetos_clase(Clase,KB,Objetos):-	
 	verifica_clase(Clase,KB,yes),
@@ -100,7 +122,7 @@ objetos_clase(Clase,KB,Objetos):-
 	objetos_descendientes_todos_clase(Hijos,KB,Descendientes_objetos),
 	append(Objetos_clase,Descendientes_objetos,Objetos),!.
 
-objetos_clase(_,_,unknown).
+objetos_clase(_,_,desconocida).
 
 %Cambiar elementos de la KB
 cambiar_elemento(_,_,[],[]).
@@ -200,7 +222,7 @@ agregar_propiedad_objeto(Objeto,Nueva_prop,Valor,OriginalKB,Nueva_KB) :-
 	cambiar_elemento([id=>Objeto,Propiedades,Relaciones],[id=>Objeto,Nueva_pro,Relaciones],Objetos,NObjetos),
 	append_propiedad(Propiedades,Nueva_prop,Valor,Nueva_pro).
 
-verifica_objeto(_,[],unknown):-!.
+verifica_objeto(_,[],desconocida):-!.
 verifica_objeto(Objeto,[class(_,_,_,_,O)|_],no):-
 	verifica_elemento([id=>not(Objeto),_,_],O).
 verifica_objeto(Objeto,[class(_,_,_,_,O)|_],yes):-
@@ -211,15 +233,15 @@ verifica_objeto(Objeto,[_|T],Respuesta):-
 verifica_objeto_lista(Objeto,KB,Res):-
 	verifica_objeto(Objeto,KB,Res),!.
 verifica_objeto_lista([],_,yes):-!.
-verifica_objeto_lista([H|_],KB,unknown):-
-	verifica_objeto(H,KB,unknown).
+verifica_objeto_lista([H|_],KB,desconocida):-
+	verifica_objeto(H,KB,desconocida).
 verifica_objeto_lista([H|_],KB,no):-
 	verifica_objeto(H,KB,no).
 verifica_objeto_lista([H|T],KB,Res):-
 	verifica_objeto(H,KB,yes),
 	verifica_objeto_lista(T,KB,Res).
 
-verifica_clase(_,[],unknown):-!.
+verifica_clase(_,[],desconocida):-!.
 verifica_clase(Clase,[class(not(Class),_,_,_,_)|_],no):-!.
 verifica_clase(Clase,[class(Clase,_,_,_,_)|_],yes):-!.
 verifica_clase(Clase,[_|T],Respuesta):-
@@ -228,8 +250,8 @@ verifica_clase(Clase,[_|T],Respuesta):-
 verifica_clase_lista(Clase,KB,Res):-
 	verifica_clase(Clase,KB,Res),!.
 verifica_clase_lista([],_,yes):-!.
-verifica_clase_lista([H|_],KB,unknown):-
-	verifica_clase(H,KB,unknown).
+verifica_clase_lista([H|_],KB,desconocida):-
+	verifica_clase(H,KB,desconocida).
 verifica_clase_lista([H|_],KB,no):-
 	verifica_clase(H,KB,no).
 verifica_clase_lista([H|T],KB,Res):-
@@ -338,7 +360,7 @@ getAllClasses([H|T], [H|M]):-
 %------------------------------
 % Saber si existe una clase:
 %------------------------------
-isClass(_, [], null):-!.
+isClass(_, [], desconocida):-!.
 
 isClass(Class, [class(not(Class),_,_,_,_)|_], no):-!.
 
@@ -352,8 +374,8 @@ isClassList(Class, KB, Ans):-
 
 isClassList([], _, yes):-!.
 
-isClassList([H|_], KB, null):-
-	isClass(H, KB, null).
+isClassList([H|_], KB, desconocida):-
+	isClass(H, KB, desconocida).
 
 isClassList([H|_], KB, no):-
 	isClass(H, KB, no).
@@ -365,7 +387,7 @@ isClassList([H|T], KB, Ans):-
 %------------------------------
 % Saber si existe un objeto:
 %------------------------------
-isObject(_, [], null):-!.
+isObject(_, [], desconocida):-!.
 
 isObject(Object,[class(_, _, _, _, O)|_], no):-
 	existsElement([id=>not(Object), _, _], O).
@@ -379,8 +401,8 @@ isObject(Object, [_|T], Answer):-
 isObjectList(Object, KB, Ans):-
 	isObject(Object, KB, Ans),!.
 isObjectList([], _, yes):-!.
-isObjectList([H|_], KB, null):-
-	isObject(H, KB, null).
+isObjectList([H|_], KB, desconocida):-
+	isObject(H, KB, desconocida).
 isObjectList([H|_], KB, no):-
 	isObject(H, KB, no).
 isObjectList([H|T], KB, Ans):-
@@ -390,7 +412,7 @@ isObjectList([H|T], KB, Ans):-
 %------------------------------
 % Obtener nombres de objetos de una clase:
 %------------------------------
-getNamesObjectsClass(_, [], null):-!.
+getNamesObjectsClass(_, [], desconocida):-!.
 
 getNamesObjectsClass(Class, [class(Class,_,_,_,O)|_], Objects):-
 	getNamesObjects(O, Objects),!.
@@ -434,7 +456,7 @@ getDescendantsClass(Class, KB, Descendants):-
 	getClassChildren(Class, KB, Sons),
 	getAllDescendantsClass(Sons, KB, Descendants),!.
 
-getDescendantsClass(_, _, null).
+getDescendantsClass(_, _, desconocida).
 
 getAllDescendantsClass([], _, []).
 
@@ -455,7 +477,7 @@ getObjectsNames([[id=>Name, _, _]|T], Objects):-
 %------------------------------
 % Obtener objetos dentro de una clase:
 %------------------------------
-getObjectsInClass(_, [], null):-!.
+getObjectsInClass(_, [], desconocida):-!.
 
 getObjectsInClass(Class, [class(Class, _, _, _, O)|_], Objects):-
 	getObjectsNames(O, Objects),!.
@@ -484,7 +506,7 @@ getClassObjects(Class, KB, R):-
 	getNamesObjectsClass(Class, KB, ClassName),
 	append(ClassName, OldChildren, R),!.
 
-getClassObjects(_, _, null).
+getClassObjects(_, _, desconocida).
 
 %------------------------------
 % Obtener propiedades adentro de un objeto:
@@ -500,7 +522,7 @@ getPropertiesInObject(Object, [_|T], Properties):-
 %------------------------------
 % Obtener propiedades de un objeto:
 %------------------------------
-getClassOfObject(_, [], null):-!.
+getClassOfObject(_, [], desconocida):-!.
 
 getClassOfObject(Object,[class(Class, _, _, _, O)|_], Class):-
 	existsElement([id=>Object, _, _], O),!.
@@ -511,7 +533,7 @@ getClassOfObject(Object, [_|T], Class):-
 %------------------------------
 % Obtener padre de una clase:
 %------------------------------
-getClassParent(_, [], null).
+getClassParent(_, [], desconocida).
 
 getClassParent(Class, [class(Class, Parent, _, _, _)|_], Parent):-!.
 
@@ -546,7 +568,7 @@ mergeAncestorsProperties([], _, []).
 mergeAncestorsProperties([H|T], KB, Res):-
 	mergeAncestorsProperties(T, KB, U),
 	getPropertiesInClass(H, KB, Properties),
-	append(Properties, ['UNKNOWN'], NewProperties),
+	append(Properties, ['desconocida'], NewProperties),
 	append(NewProperties, U, Res).
 
 %------------------------------
@@ -829,17 +851,17 @@ getObjectProperties(Object, KB, AllProperties):-
 	getClassOfObject(Object, KB, Class),
 	getAncestorsList(Class, KB, Ancestors),
 	mergeAncestorsProperties([Class|Ancestors], KB, ClassProperties),
-	append(ObjectProperties, ['UNKNOWN'], ObjectProperties2),
+	append(ObjectProperties, ['desconocida'], ObjectProperties2),
 	append(ObjectProperties2, ClassProperties, Temp),
 	prefer(Temp, TempPref),
 	filterUniqueProperties(TempPref, AllProperties),!.
 
-getObjectProperties(_, _, null).
+getObjectProperties(_, _, desconocida).
 
 %------------------------------
 % Encontrar valor de una propiedad:
 %------------------------------
-searchPropertyValue(_, [], null).
+searchPropertyValue(_, [], desconocida).
 
 searchPropertyValue(Attribute, [Attribute=>Value|_], Value).
 
@@ -858,7 +880,7 @@ getObjectPropertyValue(Object, Property, KB, Value):-
 	getObjectProperties(Object, KB, Properties),
 	searchPropertyValue(Property, Properties, Value).
 
-getObjectPropertyValue(_, _, _, null).
+getObjectPropertyValue(_, _, _, desconocida).
 
 %==== DANIEL ====
 
@@ -878,11 +900,9 @@ es_elemento(X,[_|Y]):-
 %------------------------------
 objetos_descendientes_todos_clase([],_,[]).
 
-objetos_descendientes_todos_clase([Clase|T],Todos_objetos):-
+objetos_descendientes_todos_clase(Clase,Objetos):-
 	open_kb('kb.txt',KB),
-	objetos_solo_clase(Clase,KB,Objetos),
-	objetos_descendientes_todos_clase(T,KB,Resto),
-	append(Objetos,Resto,Todos_objetos),!.	
+	objetos_solo_clase(Clase,KB,Objetos).
 
 %------------------------------
 % 1(b) Consultar extension de propiedad
@@ -901,10 +921,10 @@ filterObjectsByProperty(ActualKB, Property, [H|T], [H:Value|NewT]):-
 
 deleteNullProperty([], []).
 
-deleteNullProperty([_:null|T], NewT):-
+deleteNullProperty([_:desconocida|T], NewT):-
 	deleteNullProperty(T, NewT),!.
 
-deleteNullProperty([_:[null]|T], NewT):-
+deleteNullProperty([_:[desconocida]|T], NewT):-
 	deleteNullProperty(T, NewT),!.
 
 deleteNullProperty([X:Y|T], [X:Y|NewT]):-
