@@ -1022,10 +1022,27 @@ clases_perteneciente_objeto(Objeto,[class(Clase,_,_,_,Objetos)|_],Clase):-
 clases_perteneciente_objeto(Objeto,[_|T],Clase):-
 	clases_perteneciente_objeto(Objeto,T,Clase).
 
+todas_clases(Clase, [class(Class,Padre,_,_,_)|_]):-
+	Clase == Class,
+	write('\n'),
+	write(Padre),
+	write('\n'),
+	open_kb(kb.txt',KB),
+	todas_clases(Padre, KB).
+
+todas_clases(Clase,[_|T]):-
+	todas_clases(Clase,T).
+
+todas_clases(_,[]):-!.
+
 %% Clases de un objeto
 clase_objeto(Objeto, Return) :-
 	open_kb('kb.txt',KB),
-	clases_perteneciente_objeto(Objeto,KB,Return).
+	clases_perteneciente_objeto(Objeto,KB,Return),
+	write('\n'),
+	write(Return),
+	write('\n'),
+	todas_clases(Return, KB).
 
 %------------------------------
 % 1(e) Todas las propiedades de un objeto o clase
@@ -1412,7 +1429,7 @@ cambiar_nombre_objeto(Objeto,Nuevo_nombre,Nueva_KB) :-
 %------------------------------				
 % 4(b) Modificar el valor de una propiedad específica de un objeto 
 %------------------------------
-cambiar_valor_propiedad_objeto(Objeto,Propiedad,Nuevo_valor,Nueva_KB):-
+cambiar_valor_propiedad_objeto(Objeto,Propiedad,Nuevo_valor):-
 	eliminar_propiedad_objeto(Objeto,Propiedad),
 	agregar_propiedad_objeto(Objeto,Propiedad,Nuevo_valor).
 	
@@ -1420,7 +1437,7 @@ cambiar_valor_propiedad_objeto(Objeto,Propiedad,Nuevo_valor,Nueva_KB):-
 % 4(b) Modificar el valor de una propiedad específica de una clase 
 % Hacerlo mas general
 %------------------------------
-cambiar_valor_propiedad_clase(Clase,Propiedad,Nuevo_valor,Nueva_KB):-
+cambiar_valor_propiedad_clase(Clase,Propiedad,Nuevo_valor):-
 	eliminar_propiedad_clase(Clase,Propiedad),
 	agregar_propiedad_clase(Clase,Propiedad,Nuevo_valor).
 
