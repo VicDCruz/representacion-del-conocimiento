@@ -1002,10 +1002,27 @@ clases_perteneciente_objeto(Objeto,[class(Clase,_,_,_,Objetos)|_],Clase):-
 clases_perteneciente_objeto(Objeto,[_|T],Clase):-
 	clases_perteneciente_objeto(Objeto,T,Clase).
 
+todas_clases(Clase, [class(Class,Padre,_,_,_)|_]):-
+	Clase == Class,
+	write('\n'),
+	write(Padre),
+	write('\n'),
+	open_kb(kb.txt',KB),
+	todas_clases(Padre, KB).
+
+todas_clases(Clase,[_|T]):-
+	todas_clases(Clase,T).
+
+todas_clases(_,[]):-!.
+
 %% Clases de un objeto
 clase_objeto(Objeto, Return) :-
-	open_kb('kb.txt',KB),
-	clases_perteneciente_objeto(Objeto,KB,Return).
+	open_kb('C:/Users/Ingenieria/Downloads/Prolog/kb.txt',KB),
+	clases_perteneciente_objeto(Objeto,KB,Return),
+	write('\n'),
+	write(Return),
+	write('\n'),
+	todas_clases(Return, KB).
 
 %------------------------------
 % 1(e) Todas las propiedades de un objeto o clase
