@@ -1027,7 +1027,7 @@ todas_clases(Clase, [class(Class,Padre,_,_,_)|_]):-
 	write('\n'),
 	write(Padre),
 	write('\n'),
-	open_kb(kb.txt',KB),
+	open_kb('kb.txt',KB),
 	todas_clases(Padre, KB).
 
 todas_clases(Clase,[_|T]):-
