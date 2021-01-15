@@ -99,14 +99,13 @@ extractObjectsNames([[id=>Name,_,_]|T],Objects):-
 	extractObjectsNames(T,Rest),
 	append([Name],Rest,Objects).
 
-objetos_solo_clase(_,_,desconocida).
-
 objetos_solo_clase(Class,KB,Objects):-
 	isClass(Class,KB,si),
 	getOnlyObjectsInClass(Class,KB,ObjectsInClass),
 	getDescendantsClass(Class,KB,Sons),
 	getAllObjectsDescendantsClasses(Sons,KB,DescendantObjects),
 	append(ObjectsInClass,DescendantObjects,Objects),!.
+objetos_solo_clase(_,_,desconocida).
 
 getAllObjectsDescendantsClasses([],_,[]).
 
@@ -933,24 +932,20 @@ todos_los_objetos([class(_,_,_,_,Objs)|L],R):-
 	append(R1,R2,R).
 	%save_kb('objetos.txt',R).
 
-objetos_con_misma_relacion(_,[],[]).
-objetos_con_misma_relacion(X,[[_,_,[]]|L],R):-
-	objetos_con_misma_relacion(X,L,R),!.
-objetos_con_misma_relacion(X,[[_,_,[[]]]|L],R):-
-	objetos_con_misma_relacion(X,L,R),!.
-objetos_con_misma_relacion(X,[[Id,Prop,[[X=>Y,Val]|LR]]|L],[[Id,Prop,[[X=>Y,Val]]]|R]):-
-	objetos_con_misma_relacion(X,[[Id,Prop,LR]|L],R),!.
-objetos_con_misma_relacion(X,[[Id,Prop,[[_=>_,_]|LR]]|L],R):-
-	objetos_con_misma_relacion(X,[[Id,Prop,LR]|L],R),!.
-
 existe_relacion([],desconocida):- !.
 existe_relacion([X|Y],[X|Y]).
 
-acomoda_objetos(desconocida,desconocida):- !.
-acomoda_objetos([],[]).
-acomoda_objetos([[id=>X,_,[[_=>[Y|Z],_]]]|L],[X:[Y|Z]|R]):-
-	acomoda_objetos(L,R),!.
-acomoda_objetos([[id=>X,_,[[_=>Y,_]]]|L],[X:[Y]|R]):-
+acomoda_objetos(_,desconocida,desconocida):- !.
+acomoda_objetos(_,[],[]).
+acomoda_objetos(Rel,[[id=>X,_,[[Rel=>[Y|Z],_]]]|L],[X:[Y|Z]|R]):-
+	acomoda_objetos(Rel,L,R),!.
+acomoda_objetos(Rel,[[id=>X,_,[[Rel=>Y,_]]]|L],[X:[Y]|R]):-
+	acomoda_objetos(Rel,L,R),!.
+acomoda_objetos(Rel,[[id=>X,_,[[_=>_,_]]]|L],[X:[]|R]):-
+	acomoda_objetos(Rel,L,R),!.
+acomoda_objetos(Rel,[[id=>X,_,[]]|L],[X:[]|R]):-
+	acomoda_objetos(Rel,L,R),!.
+acomoda_objetos([_|L],R):-
 	acomoda_objetos(L,R),!.
 
 clase_de_objeto(_,[],[]).
@@ -994,13 +989,20 @@ relaciones_de_clase(X,KB,[Obj:Val|L],[Obj:Resultado|R]):-
 	append(Val,RH,Resultado),
 	relaciones_de_clase(X,KB,L,R),!.
 
+eliminar_vacios(desconocida,desconocida).
+eliminar_vacios([],[]).
+eliminar_vacios([_:[]|L],R):-
+	eliminar_vacios(L,R).
+eliminar_vacios([A|L],[A|H]):-
+	eliminar_vacios(L,H).
+
 extension_relacion(Relacion,Extension):-
 	open_kb('kb.txt',KB),
 	todos_los_objetos(KB,Objetos),
-	objetos_con_misma_relacion(Relacion,Objetos,NuevosObjectos),
-	existe_relacion(NuevosObjectos,Existe),
-	acomoda_objetos(Existe,Resultado),
-	relaciones_de_clase(Relacion,KB,Resultado,Extension).
+	acomoda_objetos(Relacion,Objetos,Resultado),
+	relaciones_de_clase(Relacion,KB,Resultado,Extension1),
+	eliminar_vacios(Extension1,Extension2),
+	existe_relacion(Extension2,Extension),!.
 
 %------------------------------
 % 1(d) Todas las clases a las que pertenece un objeto
