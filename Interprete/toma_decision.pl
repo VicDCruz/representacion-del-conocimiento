@@ -124,3 +124,17 @@ generate_rearrange_list_dlic([],[]).
 generate_rearrange_list_dlic([H|T],Result):-
 	generate_rearrange_list_dlic(T,Aux),
 	append([rearrange(H)],Aux,Result).
+
+rest_of_lists_dlic([],L1,L1).
+
+rest_of_lists_dlic([H|T],L1,NewL1):-
+	deleteElement(H,L1,LAux),
+	rest_of_lists_dlic(T,LAux,NewL1).
+deleteElement(_,[],[]).
+
+deleteElement(X,[X|T],N):-
+	deleteElement(X,T,N).
+
+deleteElement(X,[H|T],[H|N]):-
+	deleteElement(X,T,N),
+	X\=H.
