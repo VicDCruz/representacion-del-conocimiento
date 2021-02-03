@@ -13,7 +13,7 @@ load_take_action([H|T],KB):-
 
 
 %----------------------
-% Modulo de TOMAR DESICION
+% Modulo de TOMAR DECISION
 %----------------------
 
 tomar_decision(Decision):-
