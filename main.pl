@@ -46,8 +46,6 @@ hijos_clase(Clase,KB,Respuesta):-
 	verifica_clase(Clase,KB,si),
 	hijos_clase(Clase,KB,Respuesta),!.
 
-hijos_clase(_,_,desconocida).
-
 hijos_clase(_,[],[]).
 
 hijos_clase(Clase,[class(Hijo,Clase,_,_,_)|T],Hijos):-
@@ -57,6 +55,7 @@ hijos_clase(Clase,[class(Hijo,Clase,_,_,_)|T],Hijos):-
 hijos_clase(Clase,[_|T],Hijos):-
 	hijos_clase(Clase,T,Hijos).	
 	
+hijos_clase(_,_,desconocida).
 
 extrae_nombres_objetos([],[]):-!.
 
@@ -113,15 +112,6 @@ getAllObjectsDescendantsClasses([Class|T],KB,AllObjects):-
 	objetos_solo_clase(Class,KB,Objects),
 	getAllObjectsDescendantsClasses(T,KB,Rest),
 	append(Objects,Rest,AllObjects),!.
-
-objetos_clase(Clase,KB,Objetos):-	
-	verifica_clase(Clase,KB,si),
-	objetos_solo_clase(Clase,KB,Objetos_clase),
-	descendientes_clase(Clase,KB,Hijos),
-	objetos_descendientes_todos_clase(Hijos,KB,Descendientes_objetos),
-	append(Objetos_clase,Descendientes_objetos,Objetos),!.
-
-objetos_clase(_,_,desconocida).
 
 %Cambiar elementos de la KB
 cambiar_elemento(_,_,[],[]).
@@ -869,7 +859,7 @@ searchPropertyValue(Attribute, [_|T], Value):-
 getObjectPropertyValue(Object, Property, KB, Value):-
 	isObject(Object, KB, si),
 	getObjectProperties(Object, KB, Properties),
-	searchPropertyValue(Property, Properties, Value).
+	searchPropertyValue(Property, Properties, Value),!.
 
 getObjectPropertyValue(_, _, _, desconocida).
 
@@ -922,7 +912,7 @@ deleteNullProperty([X:Y|T], [X:Y|NewT]):-
 	deleteNullProperty(T, NewT),!.
 
 %-------------------------------------
-% 1(c) Extensión de una relación:  
+% 1(c) Extensión de una relación y obtener valor de propiedad/relacion de objeto:  
 %-------------------------------------
 
 todos_los_objetos([],[]).
@@ -931,6 +921,22 @@ todos_los_objetos([class(_,_,_,_,Objs)|L],R):-
 	todos_los_objetos(L,R2),!,
 	append(R1,R2,R).
 	%save_kb('objetos.txt',R).
+
+trae_objeto(_,[],desconocida).
+trae_objeto(Objeto,[[id=>Objeto,Props,Rels]|_],[id=>Objeto,Props,Rels]).
+trae_objeto(Objeto,[_|L],R):-
+	trae_objeto(Objeto,L,R),!.
+
+trae_valor_propiedad(_,[],desconocida).
+trae_valor_propiedad(Propiedad,[_,[[Propiedad=>Valor,_]|_],_],Valor).
+trae_valor_propiedad(Propiedad,[Id,[_|L],Rels],R):-
+	trae_valor_propiedad(Propiedad,[Id,L,Rels],R),!.
+
+trae_valor_relacion(_,[],desconocida).
+trae_valor_relacion(Relacion,[_,_,[[Relacion=>Valor,_|_]]],Valor).
+trae_valor_relacion(Relacion,[Id,P,[_|LR]],R):-
+	trae_valor_relacion(Relacion,[Id,P,LR],R).
+
 
 existe_relacion([],desconocida):- !.
 existe_relacion([X|Y],[X|Y]).
@@ -1003,6 +1009,18 @@ extension_relacion(Relacion,Extension):-
 	relaciones_de_clase(Relacion,KB,Resultado,Extension1),
 	eliminar_vacios(Extension1,Extension2),
 	existe_relacion(Extension2,Extension),!.
+
+valor_propiedad_objeto(Objeto,Propiedad,Valor):-
+	open_kb('kb.txt',KB),
+	todos_los_objetos(KB,Objetos),
+	trae_objeto(Objeto,Objetos,ListaObjeto),
+	trae_valor_propiedad(Propiedad,ListaObjeto,Valor),!.
+
+valor_relacion_objeto(Objeto,Relacion,Valor):-
+	open_kb('kb.txt',KB),
+	todos_los_objetos(KB,Objetos),
+	trae_objeto(Objeto,Objetos,ListaObjeto),
+	trae_valor_relacion(Relacion,ListaObjeto,Valor),!.
 
 %------------------------------
 % 1(d) Todas las clases a las que pertenece un objeto
