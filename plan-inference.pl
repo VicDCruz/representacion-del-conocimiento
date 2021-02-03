@@ -1,5 +1,9 @@
 %take_action_dlic
 
+:-op(800,xfx,'=>').
+:-op(800,xfx,'==>').
+:-op(800,xfx,'=>>').
+
 % Ver si hay objeto
 hay_objeto(_, [], unknown):-!.
 
@@ -48,7 +52,7 @@ obtener_valor_relacion_positiva(Attribute, [_|T], Value):-
 
 % obtener valor de una relacion de un objeto
 
-obtener_relacion_objeto(Object, Relation, Value):-
+obtener_relacion_objeto(Object, Relation, KB, Value):-
 	hay_objeto(Object, KB, yes),
 	rel_objeto(Object, Relations),
 	obtener_valor_relacion(Relation, Relations, Value).
