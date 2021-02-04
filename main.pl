@@ -927,16 +927,51 @@ trae_objeto(Objeto,[[id=>Objeto,Props,Rels]|_],[id=>Objeto,Props,Rels]).
 trae_objeto(Objeto,[_|L],R):-
 	trae_objeto(Objeto,L,R),!.
 
-trae_valor_propiedad(_,[],desconocida).
+trae_valor_propiedad(_,desconocida,[desconocida]).
+trae_valor_propiedad(_,[_,[],_],[desconocida]).
 trae_valor_propiedad(Propiedad,[_,[[Propiedad=>Valor,_]|_],_],Valor).
 trae_valor_propiedad(Propiedad,[Id,[_|L],Rels],R):-
 	trae_valor_propiedad(Propiedad,[Id,L,Rels],R),!.
 
-trae_valor_relacion(_,[],desconocida).
-trae_valor_relacion(Relacion,[_,_,[[Relacion=>Valor,_|_]]],Valor).
+trae_valor_relacion(_,desconocida,[desconocida]).
+trae_valor_relacion(_,[_,_,[]],[desconocida]).
+trae_valor_relacion(Relacion,[_,_,[[Relacion=>Valor,_]|_]],Valor).
 trae_valor_relacion(Relacion,[Id,P,[_|LR]],R):-
-	trae_valor_relacion(Relacion,[Id,P,LR],R).
+	trae_valor_relacion(Relacion,[Id,P,LR],R),!.
 
+lista_clase(_,[],[]).
+lista_clase(Clase,[class(Clase,_,Props,Rels,_)|_],[Clase,Props,Rels]).
+lista_clase(Clase,[_|CL],R):-
+	lista_clase(Clase,CL,R),!.
+
+trae_prop_valor_clase(_,[],_,[]).
+trae_prop_valor_clase(Propiedad,[Clase|LC],KB,R):-
+	lista_clase(Clase,KB,ListaClase),
+	trae_valor_propiedad(Propiedad,ListaClase,Valor),
+	Valor \= [desconocida],
+	trae_prop_valor_clase(Propiedad,LC,KB,H),
+	append([Valor],H,R);
+	trae_prop_valor_clase(Propiedad,LC,KB,R).
+
+trae_rel_valor_clase(_,[],_,[]).
+trae_rel_valor_clase(Relacion,[Clase|LC],KB,R):-
+	lista_clase(Clase,KB,ListaClase),
+	trae_valor_relacion(Relacion,ListaClase,Valor),
+	Valor \= [desconocida],
+	trae_rel_valor_clase(Relacion,LC,KB,H),
+	append([Valor],H,R);
+	trae_rel_valor_clase(Relacion,LC,KB,R).
+
+verificar_valor([],[[]]).
+verificar_valor([desconocida],[]).
+verificar_valor([H|T],[[H|T]]).
+verificar_valor([A],[[A]]).
+verificar_valor(X,[X]).
+
+formato_valor([],desconocida).
+formato_valor([[V|H]|[]],[V|H]).
+formato_valor([V|[]],V).
+formato_valor([V|H],[V|H]).
 
 existe_relacion([],desconocida):- !.
 existe_relacion([X|Y],[X|Y]).
@@ -1014,13 +1049,23 @@ valor_propiedad_objeto(Objeto,Propiedad,Valor):-
 	open_kb('kb.txt',KB),
 	todos_los_objetos(KB,Objetos),
 	trae_objeto(Objeto,Objetos,ListaObjeto),
-	trae_valor_propiedad(Propiedad,ListaObjeto,Valor),!.
+	trae_valor_propiedad(Propiedad,ListaObjeto,Valor1),
+	verificar_valor(Valor1,Valor2),
+	clase_objeto(Objeto,Clases),
+	trae_prop_valor_clase(Propiedad,Clases,KB,Valores),
+	append(Valor2,Valores,ValorR),
+	formato_valor(ValorR,Valor),!.
 
 valor_relacion_objeto(Objeto,Relacion,Valor):-
 	open_kb('kb.txt',KB),
 	todos_los_objetos(KB,Objetos),
 	trae_objeto(Objeto,Objetos,ListaObjeto),
-	trae_valor_relacion(Relacion,ListaObjeto,Valor),!.
+	trae_valor_relacion(Relacion,ListaObjeto,Valor1),
+	verificar_valor(Valor1,Valor2),
+	clase_objeto(Objeto,Clases),
+	trae_rel_valor_clase(Relacion,Clases,KB,Valores),
+	append(Valor2,Valores,ValorR),
+	formato_valor(ValorR,Valor),!.
 
 %------------------------------
 % 1(d) Todas las clases a las que pertenece un objeto

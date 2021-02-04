@@ -2,12 +2,12 @@ load_take_actions(KB):-
     objetos_solo_clase(take,KB,Objetos),
 	load_take_action(Objetos).
 
-load_take_action([],_).
+load_take_action([]).
 	
-load_take_action([H|T],KB):-
+load_take_action([H|T]):-
 	valor_relacion_objeto(H,to,Object),
-	getObjectPropertyValue(H,cost,KB,Cost),
-	getObjectPropertyValue(H,probability,KB,Probability),
+	valor_propiedad_objeto(H,cost,Cost),
+	valor_propiedad_objeto(H,probability,Probability),
 	assert(take_action_dlic(Object,Cost,Probability)),
 	load_take_action(T).
 
@@ -20,11 +20,11 @@ tomar_decision(Decision):-
     open_kb('kb.txt',KB),
     load_take_actions(KB),
 	%Lista de objetos mal colocados
-    getObjectPropertyValue(pending_tasks,list,KB,ObjetosMalColocados),
+    valor_propiedad_objeto(pending_tasks,list,ObjetosMalColocados),
 	write('Objetos mal colocados: '),write(ObjetosMalColocados),nl, 
 
 	%Lista de las ordenes de los clientes
-	getObjectPropertyValue(pending_client_orders,list,KB,OrdenesClientes),
+	valor_propiedad_objeto(pending_client_orders,list,OrdenesClientes),
 	write('Objetos ordenados por cliente: '),write(OrdenesClientes),nl,
 
 	%Lista de objetos a reubicar
@@ -43,7 +43,7 @@ tomar_decision(Decision):-
 
 	% Tomar decision final
 	decision_final(OrdenesClientes,ConjuntoInvertido,Decision),
-	write('Decision: '),write(Decision),nl. 
+	write('Decision: '),write(Decision),nl,!. 
 
 
 
@@ -72,14 +72,14 @@ valuar_posibles_reubicaciones([H|T],[Val=>H|L]):-
 	write(' Valor: '),write(Val),nl,
 	valuar_posibles_reubicaciones(T,L).
 
-evaluar_opcion([],0,_).
+evaluar_opcion([],0).
 
-evaluar_opcion([H|T],NuevoValor,KB):-
+evaluar_opcion([H|T],NuevoValor):-
 	%Probabilidad de tomar el objeto actual
 	take_action_dlic(H,_,Probabilidad),
 
 	%Verificar si realinear el objeto es buena idea (0/1)
-	verifica_accion(H,Resultado,KB),
+	verifica_accion(H,Resultado),
 	
 	evaluar_opcion(T,Val),
     NuevoValor is Val + ((Probabilidad/100)*Resultado).	
@@ -89,10 +89,10 @@ evaluar_opcion([H|T],NuevoValor,KB):-
 %El objeto a realinear está en el estante actual
 %La posicion del estante correcto del objeto es el siguiente estante en ser visitado (el mas cercano)
 
-verifica_accion(Objecto,Valor,KB):-
+verifica_accion(Objecto,Valor):-
 	valor_relacion_objeto(Objecto,last_corroborated_position,ObjetoEstanteActual),
 	valor_relacion_objeto(Objecto,associated_shelf,ObjetoEstanteCorrecto),	
-	getObjectPropertyValue(golem,position,KB,PosicionActual),
+	valor_propiedad_objeto(golem,position,PosicionActual),
 	valor_relacion_objeto(PosicionActual,nearest_shelf,EstanteMasCercano),
 	evaluar_cambio_posicion(PosicionActual,EstanteMasCercano,ObjetoEstanteActual,ObjetoEstanteCorrecto,Valor).
 

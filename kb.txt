@@ -80,9 +80,9 @@
 	class(robot,top,[],[],[[id=>golem,[ [position=>shelf_drinks,0], [left_arm=>free,0], [right_arm=>free,0] ],[]]]),
 
 	class(lists_of_control,top,[],[],[
-		[id=>all_misplaced_objects,[ [list=>[malz],0] ],[]],
+		[id=>all_misplaced_objects,[ [list=>[],0] ],[]],
 		[id=>observed_shelves,[ [list=>[],0] ],[]],
-		[id=>pending_tasks,[ [list=>[malz],0] ],[]],
+		[id=>pending_tasks,[ [list=>[kellogs],0] ],[]],
 		[id=>pending_client_orders,[ [list=>[coke],0] ],[]]
 		]),
 
